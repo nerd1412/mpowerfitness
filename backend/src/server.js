@@ -60,6 +60,13 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 app.set('io', io);
 socketHandler(io);
 
+app.get('/', (req, res) => res.json({ 
+  message: 'Welcome to Mpower Fitness API', 
+  status: 'Ready', 
+  apiVersion: '2.1.0', 
+  documentation: '/health' 
+}));
+
 app.use('/api/auth',          authRoutes);
 app.use('/api/admin',         adminRoutes);
 app.use('/api/users',         usersRouter);
