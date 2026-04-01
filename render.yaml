@@ -5,6 +5,7 @@ services:
     env: node
     plan: free # Change to starter/standard for production
     region: singapore # Change to your preferred region
+    rootDirectory: backend
     buildCommand: npm install
     startCommand: npm start
     envVars:
@@ -16,13 +17,12 @@ services:
           property: connectionString
       - key: JWT_SECRET
         generateValue: true
-      - key: PORT
-        value: 10000
 
   # Frontend React App (Static Site)
   - type: static
     name: mpower-fitness-frontend
     env: static
+    rootDirectory: frontend
     buildCommand: npm install && npm run build
     publishPath: ./build
     envVars:
