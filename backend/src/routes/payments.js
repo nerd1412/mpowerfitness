@@ -20,7 +20,7 @@ const buildUpiLink = (upiId, upiName, amount, ref, note) => {
 };
 
 const buildQrUrl = (upiLink) =>
-  `https://chart.googleapis.com/chart?cht=qr&chs=280x280&chl=${encodeURIComponent(upiLink)}&choe=UTF-8`;
+  `https://api.qrserver.com/v1/create-qr-code/?size=280x280&format=png&ecc=M&data=${encodeURIComponent(upiLink)}`;
 
 // ── INITIATE ──────────────────────────────────
 router.post('/upi/initiate', protect, authorize('user'), async (req, res) => {

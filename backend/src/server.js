@@ -97,10 +97,10 @@ const startServer = async () => {
     await sequelize.sync({ alter: true });
     console.log(`✅ Database tables ready (${sequelize.getDialect()})`);
     await connectRedis();
-    const { User, Admin } = require('./models/index');
-    const [uC, aC] = await Promise.all([User.count(), Admin.count()]);
-    if (uC === 0 || aC === 0) { console.log('🌱 Seeding…'); const { seed } = require('./utils/seeder'); await seed(); }
-    else console.log(`✅ DB: ${uC} users, ${aC} admins`);
+    const { Admin } = require('./models/index');
+    const aC = await Admin.count();
+    if (aC === 0) { console.log('🌱 Seeding admin…'); const { seed } = require('./utils/seeder'); await seed(); }
+    else console.log(`✅ DB ready (${aC} admin accounts)`);
     const PORT = process.env.PORT || 5000;
     httpServer.listen(PORT, () => console.log(`🚀 API → http://localhost:${PORT}`));
   } catch (err) { console.error('Startup error:', err); process.exit(1); }

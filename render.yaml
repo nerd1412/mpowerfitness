@@ -23,9 +23,11 @@ services:
         fromService:
           type: static
           name: mpower-fitness-frontend
-          property: host
+          property: hostURL
+      - key: BCRYPT_ROUNDS
+        value: "12"
       - key: UPI_ID
-        value: payments@mpowerfitness # Default value, can be updated in Render dashboard
+        value: payments@mpowerfitness # Update this to your actual UPI ID in Render dashboard
       - key: UPI_NAME
         value: Mpower Fitness
 
@@ -41,7 +43,12 @@ services:
         fromService:
           type: web
           name: mpower-fitness-backend
-          property: host
+          property: hostURL
+      - key: REACT_APP_SOCKET_URL
+        fromService:
+          type: web
+          name: mpower-fitness-backend
+          property: hostURL
 
 databases:
   - name: mpower-db

@@ -1,10 +1,11 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { LogoFull } from '../components/shared/Logo';
 import Footer from '../components/shared/Footer';
 
 const Landing = () => {
   const heroRef = useRef(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const handleMouseMove = (e) => {
@@ -59,26 +60,61 @@ const Landing = () => {
       {/* Navigation */}
       <nav style={{
         position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100,
-        background: 'rgba(6,6,8,0.88)', backdropFilter: 'blur(20px)',
+        background: 'rgba(6,6,8,0.92)', backdropFilter: 'blur(20px)',
         borderBottom: '1px solid var(--border)',
-        height: 60, display: 'flex', alignItems: 'center',
-        padding: '0 clamp(16px, 4vw, 40px)', justifyContent: 'space-between'
       }}>
-        <LogoFull height={44} />
-        <div className="flex items-center gap-md hide-mobile">
-          <a href="#features" style={{ color: 'var(--text-secondary)', fontSize: '14px', fontWeight: 500, transition: 'color 0.2s' }}
-            onMouseEnter={e => e.target.style.color = 'var(--text-primary)'}
-            onMouseLeave={e => e.target.style.color = 'var(--text-secondary)'}>Features</a>
-          <a href="#plans" style={{ color: 'var(--text-secondary)', fontSize: '14px', fontWeight: 500, transition: 'color 0.2s' }}
-            onMouseEnter={e => e.target.style.color = 'var(--text-primary)'}
-            onMouseLeave={e => e.target.style.color = 'var(--text-secondary)'}>Plans</a>
-          <Link to="/trainer/login" style={{ color: 'var(--text-secondary)', fontSize: '14px', fontWeight: 500 }}>For Trainers</Link>
-          <Link to="/admin/login" style={{ color: 'var(--text-muted)', fontSize: '13px' }}>Admin</Link>
+        <div style={{
+          height: 60, display: 'flex', alignItems: 'center',
+          padding: '0 clamp(16px, 4vw, 40px)', justifyContent: 'space-between'
+        }}>
+          <LogoFull height={44} />
+
+          {/* Desktop nav links */}
+          <div className="flex items-center gap-md landing-nav-links">
+            <a href="#features" className="landing-nav-link">Features</a>
+            <a href="#plans" className="landing-nav-link">Plans</a>
+            <Link to="/trainer/login" className="landing-nav-link">Trainers</Link>
+            <Link to="/admin/login" style={{ color: 'var(--text-muted)', fontSize: '13px' }}>Admin</Link>
+          </div>
+
+          {/* Right: CTA buttons + hamburger */}
+          <div className="flex items-center gap-sm">
+            <Link to="/login" className="btn btn-ghost btn-sm landing-nav-links">Sign In</Link>
+            <Link to="/register" className="btn btn-primary btn-sm">Get Started</Link>
+            {/* Hamburger — mobile only */}
+            <button
+              className="landing-hamburger"
+              onClick={() => setMobileMenuOpen(o => !o)}
+              aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
+              aria-expanded={mobileMenuOpen}
+              style={{
+                display: 'none', background: 'none', border: '1px solid var(--border)',
+                borderRadius: 8, cursor: 'pointer', color: 'var(--text-secondary)',
+                padding: '6px 8px', alignItems: 'center', justifyContent: 'center',
+              }}
+            >
+              {mobileMenuOpen
+                ? <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                : <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+              }
+            </button>
+          </div>
         </div>
-        <div className="flex items-center gap-sm">
-          <Link to="/login" className="btn btn-ghost btn-sm">Sign In</Link>
-          <Link to="/register" className="btn btn-primary btn-sm">Get Started</Link>
-        </div>
+
+        {/* Mobile dropdown menu */}
+        {mobileMenuOpen && (
+          <div style={{
+            background: 'rgba(6,6,8,0.97)', borderTop: '1px solid var(--border)',
+            padding: '12px 20px 20px', display: 'flex', flexDirection: 'column', gap: 4,
+          }}>
+            <a href="#features" className="landing-mobile-link" onClick={() => setMobileMenuOpen(false)}>Features</a>
+            <a href="#plans" className="landing-mobile-link" onClick={() => setMobileMenuOpen(false)}>Plans</a>
+            <Link to="/trainer/login" className="landing-mobile-link" onClick={() => setMobileMenuOpen(false)}>Trainers</Link>
+            <Link to="/login" className="landing-mobile-link" onClick={() => setMobileMenuOpen(false)}>Sign In</Link>
+            <Link to="/admin/login" style={{ color: 'var(--text-muted)', fontSize: '13px', padding: '10px 4px' }} onClick={() => setMobileMenuOpen(false)}>Admin</Link>
+            <Link to="/register" className="btn btn-primary btn-full" style={{ marginTop: 8 }} onClick={() => setMobileMenuOpen(false)}>Get Started</Link>
+          </div>
+        )}
       </nav>
 
       {/* Hero */}

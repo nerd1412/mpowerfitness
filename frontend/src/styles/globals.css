@@ -980,3 +980,100 @@ img, video { max-width: 100%; }
   .filter-bar .form-input { max-width: 100%; }
   .table-wrapper { border-radius: var(--r-md); }
 }
+
+/* ================================================================
+   MISSING UTILITY CLASSES
+   ================================================================ */
+
+/* btn-xl — large CTA button used on landing page */
+.btn-xl { padding: 15px 32px; font-size: 16px; border-radius: var(--r-lg); gap: 8px; }
+@media (max-width: 480px) { .btn-xl { padding: 13px 22px; font-size: 15px; } }
+
+/* hide-mobile — hide on screens ≤768 px (landing page desktop nav) */
+@media (max-width: 768px) { .hide-mobile { display: none !important; } }
+
+/* ================================================================
+   LANDING PAGE — responsive nav & mobile menu
+   ================================================================ */
+.landing-nav-link {
+  color: var(--t2); font-size: 14px; font-weight: 500;
+  transition: color 0.2s; text-decoration: none;
+}
+.landing-nav-link:hover { color: var(--t1); }
+
+.landing-mobile-link {
+  display: block; color: var(--t2); font-size: 15px; font-weight: 500;
+  padding: 11px 4px; border-bottom: 1px solid var(--border);
+  text-decoration: none; transition: color 0.2s;
+}
+.landing-mobile-link:last-of-type { border-bottom: none; }
+.landing-mobile-link:hover { color: var(--t1); }
+
+/* Show hamburger + hide desktop links on mobile */
+@media (max-width: 768px) {
+  .landing-nav-links { display: none !important; }
+  .landing-hamburger { display: inline-flex !important; }
+}
+
+/* ================================================================
+   COMPLETE RESPONSIVE: Admin / Trainer / User pages
+   ================================================================ */
+
+/* Stat grids collapse nicely */
+@media (max-width: 480px) {
+  .grid-stats { grid-template-columns: repeat(2, 1fr) !important; }
+  .stats-grid  { grid-template-columns: repeat(2, 1fr) !important; }
+}
+
+/* Profile / settings forms */
+@media (max-width: 600px) {
+  .profile-grid { grid-template-columns: 1fr !important; }
+  .settings-grid { grid-template-columns: 1fr !important; }
+}
+
+/* Admin dashboard tables — horizontal scroll on mobile */
+@media (max-width: 768px) {
+  .table-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .admin-grid-4 { grid-template-columns: repeat(2, 1fr) !important; }
+  .admin-grid-3 { grid-template-columns: 1fr !important; }
+}
+@media (max-width: 480px) {
+  .admin-grid-4 { grid-template-columns: repeat(2, 1fr) !important; }
+}
+
+/* Booking / availability panels */
+@media (max-width: 768px) {
+  .booking-layout { grid-template-columns: 1fr !important; }
+  .availability-grid { grid-template-columns: repeat(2, 1fr) !important; }
+}
+@media (max-width: 480px) {
+  .availability-grid { grid-template-columns: 1fr !important; }
+}
+
+/* Analytics charts — full width on mobile */
+@media (max-width: 768px) {
+  .analytics-grid { grid-template-columns: 1fr !important; }
+  .chart-container { width: 100% !important; min-width: 0 !important; }
+}
+
+/* Programs grid */
+@media (max-width: 640px) {
+  .programs-grid { grid-template-columns: 1fr !important; }
+}
+
+/* Trainer card grid */
+@media (max-width: 480px) {
+  .trainer-card-grid { grid-template-columns: 1fr !important; }
+}
+
+/* Modal full-width on very small screens */
+@media (max-width: 400px) {
+  .modal { max-width: 100% !important; }
+  .modal-body { padding: 16px !important; }
+}
+
+/* Page section headings on mobile */
+@media (max-width: 480px) {
+  .section-title { font-size: 20px !important; }
+  .page-hero-title { font-size: 26px !important; }
+}
