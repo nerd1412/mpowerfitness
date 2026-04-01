@@ -93,8 +93,9 @@ app.use((err, req, res, next) => { console.error(err.stack); res.status(err.stat
 
 const startServer = async () => {
   try {
-    await sequelize.sync({ alter: process.env.NODE_ENV !== 'production' });
-    console.log(`✅ Database ready (${sequelize.getDialect()})`);
+    // In production, sync tables (alter adds columns without dropping data)
+    await sequelize.sync({ alter: true });
+    console.log(`✅ Database tables ready (${sequelize.getDialect()})`);
     await connectRedis();
     const { User, Admin } = require('./models/index');
     const [uC, aC] = await Promise.all([User.count(), Admin.count()]);
