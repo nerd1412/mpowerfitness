@@ -4,7 +4,7 @@ services:
     name: mpower-fitness-backend
     env: node
     plan: free # Change to starter/standard for production
-    region: singapore # Change to your preferred region
+    region: singapore # Change to your preferred region (e.g., singapore, ohio, frankfurt)
     rootDirectory: backend
     buildCommand: npm install
     startCommand: npm start
@@ -17,6 +17,17 @@ services:
           property: connectionString
       - key: JWT_SECRET
         generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: FRONTEND_URL
+        fromService:
+          type: static
+          name: mpower-fitness-frontend
+          property: host
+      - key: UPI_ID
+        value: payments@mpowerfitness # Default value, can be updated in Render dashboard
+      - key: UPI_NAME
+        value: Mpower Fitness
 
   # Frontend React App (Static Site)
   - type: static
