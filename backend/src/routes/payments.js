@@ -41,10 +41,15 @@ router.post('/upi/initiate', protect, authorize('user'), async (req, res) => {
       programId: programId || null,
     });
 
+    const enc = encodeURIComponent;
+    const base = `pa=${upiId}&pn=${enc(upiName)}&am=${amount.toFixed(2)}&cu=INR&tn=${enc(note)}&tr=${ref}`;
     const appLinks = {
-      gpay: `tez://upi/pay?pa=${upiId}&pn=${encodeURIComponent(upiName)}&am=${amount.toFixed(2)}&cu=INR&tn=${encodeURIComponent(note)}&tr=${ref}`,
-      phonepe: `phonepe://pay?pa=${upiId}&pn=${encodeURIComponent(upiName)}&am=${amount.toFixed(2)}&cu=INR&tn=${encodeURIComponent(note)}&tr=${ref}`,
-      paytm: `paytmmp://upi/pay?pa=${upiId}&pn=${encodeURIComponent(upiName)}&am=${amount.toFixed(2)}&cu=INR&tn=${encodeURIComponent(note)}&tr=${ref}`,
+      gpay:    `tez://upi/pay?${base}`,
+      phonepe: `phonepe://pay?${base}`,
+      paytm:   `paytmmp://upi/pay?${base}`,
+      bhim:    `upi://pay?${base}`,
+      cred:    `credpay://pay?${base}`,
+      jio:     `jiomoney://upi/pay?${base}`,
     };
 
     res.json({
@@ -102,6 +107,64 @@ router.post('/upi/verify', protect, authorize('user'), async (req, res) => {
     if (io) io.to(`user_${req.user.id}`).emit('payment_success', { paymentId: payment.id, amount: payment.amount });
 
     res.json({ success: true, message: 'Payment verified! Your plan is now active.', payment: { id: payment.id, amount: payment.amount, utr: utr.trim(), status: 'success' } });
+  } catch (err) { res.status(500).json({ success: false, message: err.message }); }
+});
+
+// ── ADMIN: list all payments ───────────────────
+router.get('/admin/all', protect, authorize('admin', 'superadmin'), async (req, res) => {
+  try {
+    const { status, page = 1, limit = 50 } = req.query;
+    const where = status ? { status } : {};
+    const payments = await Payment.findAll({
+      where, order: [['createdAt', 'DESC']],
+      limit: +limit, offset: (+page - 1) * +limit,
+    });
+    const total = await Payment.count({ where });
+    res.json({ success: true, payments, total });
+  } catch (err) { res.status(500).json({ success: false, message: err.message }); }
+});
+
+// ── ADMIN: manually verify payment ────────────
+router.patch('/admin/:paymentId/verify', protect, authorize('admin', 'superadmin'), async (req, res) => {
+  try {
+    const { utr, notes } = req.body;
+    const payment = await Payment.findByPk(req.params.paymentId);
+    if (!payment) return res.status(404).json({ success: false, message: 'Payment not found' });
+    if (payment.status === 'success') return res.json({ success: true, message: 'Already verified', payment });
+
+    payment.status = 'success';
+    if (utr) payment.utrNumber = utr.trim();
+    if (notes) payment.description = (payment.description || '') + ` [Admin: ${notes}]`;
+    await payment.save();
+
+    if (payment.type === 'subscription' && payment.subscriptionPlan) {
+      const months = { monthly: 1, quarterly: 3, premium: 12 }[payment.subscriptionPlan] || 1;
+      const endDate = new Date();
+      endDate.setMonth(endDate.getMonth() + months);
+      await User.update({
+        subscriptionPlan: payment.subscriptionPlan,
+        subscriptionStartDate: new Date(),
+        subscriptionEndDate: endDate,
+        subscriptionActive: true,
+      }, { where: { id: payment.userId } });
+    }
+    if (payment.type === 'session_booking' && payment.bookingId) {
+      await Booking.update({ paymentStatus: 'paid' }, { where: { id: payment.bookingId } });
+    }
+    const io = req.app.get('io');
+    if (io) io.to(`user_${payment.userId}`).emit('payment_success', { paymentId: payment.id, amount: payment.amount });
+    res.json({ success: true, message: 'Payment verified by admin', payment });
+  } catch (err) { res.status(500).json({ success: false, message: err.message }); }
+});
+
+// ── ADMIN: reject payment ──────────────────────
+router.patch('/admin/:paymentId/reject', protect, authorize('admin', 'superadmin'), async (req, res) => {
+  try {
+    const payment = await Payment.findByPk(req.params.paymentId);
+    if (!payment) return res.status(404).json({ success: false, message: 'Payment not found' });
+    payment.status = 'failed';
+    await payment.save();
+    res.json({ success: true, message: 'Payment rejected', payment });
   } catch (err) { res.status(500).json({ success: false, message: err.message }); }
 });
 

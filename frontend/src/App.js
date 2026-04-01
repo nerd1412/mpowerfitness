@@ -24,6 +24,7 @@ const UserTrainers   = lazy(() => import('./pages/user/Trainers'));
 const UserPrograms   = lazy(() => import('./pages/user/Programs'));
 const UserProfile    = lazy(() => import('./pages/user/Profile'));
 const UserChat       = lazy(() => import('./pages/user/Chat'));
+const UserSessions   = lazy(() => import('./pages/user/Sessions'));
 
 const TrainerDashboard = lazy(() => import('./pages/trainer/Dashboard'));
 const TrainerClients   = lazy(() => import('./pages/trainer/Clients'));
@@ -147,6 +148,7 @@ function App() {
             <Route path="trainers"  element={<UserTrainers/>}/>
             <Route path="programs"  element={<UserPrograms/>}/>
             <Route path="chat"      element={<UserChat/>}/>
+            <Route path="sessions"  element={<UserSessions/>}/>
             <Route path="profile"   element={<UserProfile/>}/>
           </Route>
 

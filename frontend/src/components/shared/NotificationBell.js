@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { io as ioClient } from 'socket.io-client';
+import { useNavigate } from 'react-router-dom';
 import api from '../../utils/api';
 import useAuthStore from '../../store/authStore';
 
@@ -38,6 +39,7 @@ const SOCKET_URL = (process.env.REACT_APP_SOCKET_URL || '').replace(/\/api$/, ''
 
 const NotificationBell = () => {
   const { user, role, accessToken } = useAuthStore();
+  const navigate = useNavigate();
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount]     = useState(0);
   const [open, setOpen]                   = useState(false);
@@ -195,17 +197,20 @@ const NotificationBell = () => {
             notifications.slice(0, 30).map((n, i) => (
               <div
                 key={n.id || n._id || i}
-                onClick={() => !n.isRead && markOneRead(n.id || n._id)}
+                onClick={() => {
+                  if (!n.isRead) markOneRead(n.id || n._id);
+                  if (n.actionUrl) { setOpen(false); navigate(n.actionUrl); }
+                }}
                 style={{
                   padding: '11px 16px',
                   borderBottom: i < Math.min(notifications.length, 30) - 1 ? '1px solid var(--border)' : 'none',
                   background: n.isRead ? 'transparent' : 'rgba(200,241,53,0.04)',
                   display: 'flex', gap: 10, alignItems: 'flex-start',
-                  cursor: n.isRead ? 'default' : 'pointer',
+                  cursor: (n.isRead && !n.actionUrl) ? 'default' : 'pointer',
                   transition: 'background 0.12s',
                 }}
-                onMouseEnter={e => { if (!n.isRead) e.currentTarget.style.background = 'rgba(200,241,53,0.07)'; }}
-                onMouseLeave={e => { if (!n.isRead) e.currentTarget.style.background = 'rgba(200,241,53,0.04)'; }}
+                onMouseEnter={e => { if (!n.isRead || n.actionUrl) e.currentTarget.style.background = n.isRead ? 'var(--s1)' : 'rgba(200,241,53,0.07)'; }}
+                onMouseLeave={e => { e.currentTarget.style.background = n.isRead ? 'transparent' : 'rgba(200,241,53,0.04)'; }}
               >
                 <span style={{ fontSize: 17, flexShrink: 0, marginTop: 1 }}>
                   {TYPE_ICON[n.type] || '📣'}

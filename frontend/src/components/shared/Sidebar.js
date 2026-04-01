@@ -43,7 +43,7 @@ const SidebarShell = ({ collapsed, onToggle, accent, badge, badgeClass, userSub,
         padding: collapsed ? '14px 0' : '14px 14px',
         borderBottom:'1px solid var(--border)',
         display:'flex', flexDirection:'column', gap:5,
-        flexShrink:0, minHeight:64,
+        flexShrink:0, height:64,
         justifyContent:'center',
       }}>
         {collapsed ? (
@@ -137,6 +137,7 @@ export const UserSidebar = ({ collapsed, onToggle }) => {
         { to:'/user/nutrition', icon:'🥗', label:'Nutrition' },
         { to:'/user/progress',  icon:'📊', label:'Progress' },
         { to:'/user/trainers',  icon:'🏅', label:'Find Trainers' },
+        { to:'/user/sessions',  icon:'🗓️', label:'My Sessions' },
         { to:'/user/bookings',  icon:'📅', label:'My Bookings' },
         { to:'/user/programs',  icon:'🎯', label:'Programs' },
         { to:'/user/chat',      icon:'💬', label:'Messages' },

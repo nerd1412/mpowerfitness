@@ -138,28 +138,36 @@ const UserWorkoutDetail = () => {
 
       {/* Session Timer Bar */}
       {activeSession && (
-        <div className="session-timer-bar" style={{
+        <div style={{
           background:'rgba(200,241,53,0.08)', border:'1px solid rgba(200,241,53,0.3)',
-          borderRadius:'var(--radius-lg)', padding:'20px 24px', marginBottom:24,
+          borderRadius:'var(--radius-lg)', padding:'18px 24px', marginBottom:24,
+          display:'flex', alignItems:'center', gap:20, flexWrap:'wrap',
         }}>
-          <div style={{ display:'flex', alignItems:'center', gap:20 }}>
-            <div style={{ textAlign:'center' }}>
-              <div style={{ fontWeight:800, fontSize:36, color:'var(--neon-lime)', lineHeight:1 }}>{formatTime(elapsed)}</div>
-              <div style={{ fontSize:11, color:'var(--text-muted)', textTransform:'uppercase', letterSpacing:'0.08em' }}>Elapsed</div>
+          {/* Timer */}
+          <div style={{ textAlign:'center', minWidth:80 }}>
+            <div style={{ fontWeight:800, fontSize:34, color:'var(--neon-lime)', lineHeight:1, fontVariantNumeric:'tabular-nums' }}>{formatTime(elapsed)}</div>
+            <div style={{ fontSize:10, color:'var(--text-muted)', textTransform:'uppercase', letterSpacing:'0.08em', marginTop:3 }}>Elapsed</div>
+          </div>
+          <div style={{ width:1, height:36, background:'var(--border)', flexShrink:0 }}/>
+          {/* Exercises done */}
+          <div style={{ textAlign:'center', minWidth:64 }}>
+            <div style={{ fontWeight:800, fontSize:34, color:'var(--electric-orange)', lineHeight:1, fontVariantNumeric:'tabular-nums' }}>{completedEx.length}/{workout.exercises?.length}</div>
+            <div style={{ fontSize:10, color:'var(--text-muted)', textTransform:'uppercase', letterSpacing:'0.08em', marginTop:3 }}>Done</div>
+          </div>
+          <div style={{ width:1, height:36, background:'var(--border)', flexShrink:0 }}/>
+          {/* Progress bar */}
+          <div style={{ flex:1, minWidth:140 }}>
+            <div style={{ display:'flex', justifyContent:'space-between', fontSize:11, color:'var(--text-muted)', marginBottom:6 }}>
+              <span>Progress</span><span style={{ fontWeight:700, color:'var(--neon-lime)' }}>{Math.round(progress)}%</span>
             </div>
-            <div style={{ width:1, height:40, background:'var(--border)' }}/>
-            <div style={{ textAlign:'center' }}>
-              <div style={{ fontWeight:800, fontSize:36, color:'var(--electric-orange)', lineHeight:1 }}>{completedEx.length}/{workout.exercises?.length}</div>
-              <div style={{ fontSize:11, color:'var(--text-muted)', textTransform:'uppercase', letterSpacing:'0.08em' }}>Done</div>
+            <div className="progress-bar" style={{ height:8, borderRadius:4, background:'var(--surface-3)' }}>
+              <div style={{ height:'100%', width:`${progress}%`, background:'var(--neon-lime)', borderRadius:4, transition:'width 0.4s ease' }}/>
             </div>
           </div>
-          <div className="timer-progress" style={{ flex:1, maxWidth:300 }}>
-            <div style={{ fontSize:12, color:'var(--text-muted)', marginBottom:6 }}>Progress</div>
-            <div className="progress-bar" style={{ height:10 }}>
-              <div className="progress-fill" style={{ width:`${progress}%` }}/>
-            </div>
-          </div>
-          <button className="btn btn-primary" onClick={finishSession}>Finish Session ✓</button>
+          {/* Finish */}
+          <button className="btn btn-primary" style={{ flexShrink:0 }} onClick={finishSession}>
+            ✓ Finish
+          </button>
         </div>
       )}
 

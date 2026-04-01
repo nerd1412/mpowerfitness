@@ -1,31 +1,210 @@
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '../../.env') });
 const bcrypt = require('bcryptjs');
-const { Admin } = require('../models/index');
+const { Admin, Workout, Program, NutritionPlan } = require('../models/index');
 
+/* ─── Helper ──────────────────────────────────────────────────── */
+const exists = async (Model, where) => !!(await Model.findOne({ where }));
+
+/* ─── Seed ────────────────────────────────────────────────────── */
 const seed = async () => {
-  console.log('🌱 Seeding Mpower Fitness database...');
+  console.log('🌱 Seeding Mpower Fitness database…');
 
-  const existingAdmin = await Admin.findOne({ where: { email: 'admin@mpowerfitness.com' } });
-  if (existingAdmin) {
-    console.log('✅ Admin already exists, skipping seed');
-    return;
+  /* ── 1. Admin account ─────────────────────────────────────── */
+  if (!(await exists(Admin, { email: 'admin@mpowerfitness.com' }))) {
+    await Admin.create({
+      name: 'Mpower Admin',
+      email: 'admin@mpowerfitness.com',
+      password: await bcrypt.hash('Admin@123456', 12),
+      role: 'superadmin',
+      isActive: true,
+      upiId: process.env.UPI_ID || 'payments@mpowerfitness',
+      upiName: process.env.UPI_NAME || 'Mpower Fitness',
+      permissions: ['all'],
+    });
+    console.log('✅ Admin seeded  →  admin@mpowerfitness.com / Admin@123456');
+  } else {
+    console.log('✅ Admin already exists, skipping');
   }
 
-  await Admin.create({
-    name: 'Mpower Admin',
-    email: 'admin@mpowerfitness.com',
-    password: await bcrypt.hash('Admin@123456', 12),
-    role: 'superadmin',
-    isActive: true,
-    upiId: process.env.UPI_ID || 'payments@mpowerfitness',
-    upiName: process.env.UPI_NAME || 'Mpower Fitness',
-    permissions: ['all'],
-  });
+  /* ── 2. Sample workouts ──────────────────────────────────── */
+  if (!(await exists(Workout, { title: 'Full-Body Strength Foundation' }))) {
+    await Workout.create({
+      title: 'Full-Body Strength Foundation',
+      description: 'A science-backed compound movement programme targeting all major muscle groups. Based on progressive overload principles (ACSM guidelines), this 3×/week routine builds functional strength and lean mass simultaneously.',
+      category: 'strength',
+      difficulty: 'beginner',
+      duration: 50,
+      caloriesBurn: 320,
+      isFeatured: true,
+      isActive: true,
+      createdBy: 'admin',
+      tags: ['compound', 'full-body', 'progressive-overload', 'beginner-friendly', 'ACSM'],
+      equipment: ['barbell', 'dumbbells', 'bench', 'pull-up-bar'],
+      exercises: [
+        { name: 'Bodyweight Squat (warm-up)', sets: 2, reps: 15, restTime: 30,
+          instructions: 'Feet shoulder-width, chest up, drive knees out. Activates glutes before loaded work.',
+          muscleGroups: ['quadriceps', 'glutes'] },
+        { name: 'Goblet Squat', sets: 3, reps: 12, restTime: 60,
+          instructions: 'Hold dumbbell at chest, sit back into squat. Promotes ankle mobility and upright torso.',
+          muscleGroups: ['quadriceps', 'glutes', 'core'] },
+        { name: 'Dumbbell Romanian Deadlift', sets: 3, reps: 10, restTime: 90,
+          instructions: 'Hinge at hips with soft knees, push hips back. Research shows superior hamstring EMG vs leg curl.',
+          muscleGroups: ['hamstrings', 'glutes', 'lower_back'] },
+        { name: 'Push-Up', sets: 3, reps: 12, restTime: 60,
+          instructions: 'Elbows at 45°, full ROM. RCT data: compound push patterns increase shoulder stability.',
+          muscleGroups: ['chest', 'triceps', 'anterior_deltoid'] },
+        { name: 'Dumbbell Bent-Over Row', sets: 3, reps: 10, restTime: 60,
+          instructions: 'Retract scapula at top. Balances push:pull ratio, reducing injury risk.',
+          muscleGroups: ['latissimus_dorsi', 'rhomboids', 'biceps'] },
+        { name: 'Plank', sets: 3, duration: 30, restTime: 45,
+          instructions: 'Neutral spine, brace abs. McGill Big-3 approved for spinal stability.',
+          muscleGroups: ['core', 'transverse_abdominis'] },
+      ],
+    });
+    console.log('✅ Workout 1 seeded — Full-Body Strength Foundation');
+  }
 
-  console.log('✅ Admin seeded');
-  console.log('   Email:    admin@mpowerfitness.com');
-  console.log('   Password: Admin@123456');
+  if (!(await exists(Workout, { title: 'HIIT Metabolic Blast' }))) {
+    await Workout.create({
+      title: 'HIIT Metabolic Blast',
+      description: 'High-Intensity Interval Training protocol backed by Tabata (1996) and Gibala (2008) research. 20s max effort : 10s rest cycles elevate EPOC (Excess Post-exercise Oxygen Consumption) for up to 24hr post-session fat burn.',
+      category: 'hiit',
+      difficulty: 'intermediate',
+      duration: 25,
+      caloriesBurn: 280,
+      isFeatured: true,
+      isActive: true,
+      createdBy: 'admin',
+      tags: ['HIIT', 'fat-loss', 'EPOC', 'Tabata', 'cardio', 'no-equipment'],
+      equipment: ['mat'],
+      exercises: [
+        { name: 'Jump Squat', sets: 4, duration: 20, restTime: 10,
+          instructions: 'Explosive upward drive, soft landing. Plyometric training boosts power output (NSCA, 2016).',
+          muscleGroups: ['quadriceps', 'glutes', 'calves'] },
+        { name: 'Push-Up to T-Rotation', sets: 4, duration: 20, restTime: 10,
+          instructions: 'Alternate thoracic rotation each rep. Multi-planar movement increases caloric demand by ~18%.',
+          muscleGroups: ['chest', 'core', 'obliques'] },
+        { name: 'Mountain Climbers', sets: 4, duration: 20, restTime: 10,
+          instructions: 'Drive knees to chest alternately at speed. Elevates HR to 85–95% max (zone 4–5).',
+          muscleGroups: ['core', 'hip_flexors', 'quadriceps'] },
+        { name: 'Burpee', sets: 4, duration: 20, restTime: 10,
+          instructions: 'Full extension at top. Burns ~10 kcal/min — highest of any bodyweight exercise (ACE, 2013).',
+          muscleGroups: ['full_body'] },
+        { name: 'High Knees', sets: 4, duration: 20, restTime: 10,
+          instructions: 'Drive knees to hip height. Active recovery between rounds keeps HR elevated.',
+          muscleGroups: ['hip_flexors', 'quadriceps', 'calves'] },
+        { name: 'Lateral Lunge', sets: 4, duration: 20, restTime: 10,
+          instructions: 'Step wide, sit into lunge, push back. Targets adductors and glute medius — often neglected.',
+          muscleGroups: ['glutes', 'adductors', 'quadriceps'] },
+      ],
+    });
+    console.log('✅ Workout 2 seeded — HIIT Metabolic Blast');
+  }
+
+  /* ── 3. Sample program ───────────────────────────────────── */
+  if (!(await exists(Program, { title: '8-Week Body Recomposition' }))) {
+    await Program.create({
+      title: '8-Week Body Recomposition',
+      description: 'Evidence-based 8-week simultaneous fat-loss and muscle-gain programme. Combines resistance training (3×/week) with moderate cardio (2×/week) and caloric cycling. Based on Barakat et al. (2020) meta-analysis showing recomposition is achievable for trained individuals in a controlled caloric range (±200–300 kcal maintenance).',
+      category: 'recomposition',
+      difficulty: 'intermediate',
+      duration: 8,
+      price: 2999,
+      isPaid: true,
+      isActive: true,
+      isFeatured: true,
+      tags: ['recomposition', 'fat-loss', 'muscle-gain', 'evidence-based', '8-week'],
+      features: [
+        '3 strength sessions + 2 HIIT sessions per week',
+        'Progressive overload tracker with weekly milestones',
+        'Science-backed caloric cycling protocol',
+        'Video exercise library with form cues',
+        'Weekly check-in and adjustment protocol',
+        'Nutrition guidance with macro targets',
+      ],
+      workoutPlan: {
+        week1_2: 'Foundation — establish movement patterns, 60–70% 1RM',
+        week3_4: 'Hypertrophy — 3–4 sets × 8–12 reps, increase load 5%',
+        week5_6: 'Strength — 4–5 sets × 4–6 reps, 80–85% 1RM',
+        week7_8: 'Peak & Deload — peak week testing + 50% volume deload',
+      },
+    });
+    console.log('✅ Program seeded — 8-Week Body Recomposition');
+  }
+
+  /* ── 4. Sample nutrition plan ────────────────────────────── */
+  if (!(await exists(NutritionPlan, { title: 'Balanced Macro Blueprint' }))) {
+    await NutritionPlan.create({
+      title: 'Balanced Macro Blueprint',
+      description: 'Flexible macro-based eating plan grounded in ICMR (Indian Council of Medical Research) dietary guidelines and adapted for active individuals. Emphasises dal, sabzi, roti, rice, curd and regional whole foods with precision macro targets.',
+      category: 'general',
+      goal: 'maintenance',
+      calories: 2200,
+      protein: 160,
+      carbs: 260,
+      fat: 65,
+      isActive: true,
+      isFeatured: true,
+      tags: ['balanced', 'Indian-foods', 'ICMR', 'macros', 'flexible', 'vegetarian-friendly'],
+      meals: [
+        {
+          name: 'Breakfast (7–8 AM)',
+          time: '07:30',
+          foods: [
+            { name: 'Oats with milk & banana', quantity: '60g oats + 200ml milk + 1 banana', calories: 380, protein: 14, carbs: 68, fat: 6 },
+            { name: 'Boiled eggs or paneer', quantity: '2 eggs OR 80g paneer', calories: 160, protein: 14, carbs: 2, fat: 10 },
+            { name: 'Green tea', quantity: '1 cup unsweetened', calories: 2, protein: 0, carbs: 0, fat: 0 },
+          ],
+        },
+        {
+          name: 'Mid-Morning (10:30 AM)',
+          time: '10:30',
+          foods: [
+            { name: 'Mixed nuts', quantity: '30g almonds + walnuts', calories: 185, protein: 5, carbs: 6, fat: 16 },
+            { name: 'Seasonal fruit', quantity: '1 medium apple / guava / pear', calories: 80, protein: 1, carbs: 20, fat: 0 },
+          ],
+        },
+        {
+          name: 'Lunch (1–2 PM)',
+          time: '13:00',
+          foods: [
+            { name: 'Dal (moong/masoor/chana)', quantity: '1 katori (150g cooked)', calories: 145, protein: 10, carbs: 22, fat: 2 },
+            { name: 'Mixed sabzi', quantity: '200g cooked vegetables', calories: 90, protein: 4, carbs: 14, fat: 2 },
+            { name: 'Chapati / brown rice', quantity: '2 medium roti OR 120g cooked brown rice', calories: 200, protein: 6, carbs: 40, fat: 2 },
+            { name: 'Curd / raita', quantity: '150g low-fat curd', calories: 90, protein: 7, carbs: 8, fat: 2 },
+          ],
+        },
+        {
+          name: 'Pre-Workout Snack (4:30 PM)',
+          time: '16:30',
+          foods: [
+            { name: 'Banana + peanut butter', quantity: '1 large banana + 1 tbsp PB', calories: 230, protein: 5, carbs: 38, fat: 8 },
+          ],
+        },
+        {
+          name: 'Dinner (7:30–8 PM)',
+          time: '19:30',
+          foods: [
+            { name: 'Grilled chicken / paneer / tofu', quantity: '150g lean protein', calories: 220, protein: 35, carbs: 3, fat: 7 },
+            { name: 'Sautéed vegetables', quantity: '200g mixed (broccoli, beans, capsicum)', calories: 70, protein: 4, carbs: 10, fat: 1 },
+            { name: 'Chapati', quantity: '2 medium roti', calories: 160, protein: 5, carbs: 32, fat: 2 },
+          ],
+        },
+      ],
+      guidelines: [
+        'Drink 35 ml water per kg bodyweight daily (WHO guideline)',
+        'Eat within 45 min post-workout: 3:1 carb:protein ratio (ISSN 2017)',
+        'Space meals 3–4 hrs apart to optimise protein synthesis',
+        'Include 400g vegetables/fruit daily (ICMR rainbow-plate recommendation)',
+        'Limit refined sugar to <25g/day (WHO 2015)',
+        'Adjust portions ±200 kcal based on weekly weight trend',
+      ],
+    });
+    console.log('✅ Nutrition plan seeded — Balanced Macro Blueprint');
+  }
+
+  console.log('\n🚀 Seeding complete!\n');
 };
 
 module.exports = { seed };

@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 import api from '../../utils/api';
+import useAuthStore from '../../store/authStore';
 import UpiPaymentModal from '../../components/shared/UpiPaymentModal';
 
 const DAYS = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
 
 export default function UserTrainers() {
+  const { user } = useAuthStore();
   const [trainers, setTrainers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState(null);
@@ -69,6 +71,12 @@ export default function UserTrainers() {
   const [searchQuery, setSearchQuery] = useState('');
   const [cityFilter, setCityFilter] = useState('');
   const filteredTrainers = trainers.filter(t => {
+    // Exclude the admin-assigned trainer (user already has dedicated trainer)
+    const tid = t.id || t._id;
+    if (user?.assignedTrainerId && user.assignedTrainerId === tid) return false;
+    // Only show trainers who have configured at least one availability slot
+    const hasSlots = (t.availability || []).some(day => (day.slots || []).length > 0);
+    if (!hasSlots) return false;
     if (searchQuery && !`${t.name} ${t.bio || ''} ${(t.specializations||[]).join(' ')}`.toLowerCase().includes(searchQuery.toLowerCase())) return false;
     if (cityFilter && !(t.city || '').toLowerCase().includes(cityFilter.toLowerCase())) return false;
     return true;
