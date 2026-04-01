@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 540 150" fill="none">
+  <!-- Ghost italic M — visible at #1e2230 on dark bg, skewed for italic feel -->
+  <text x="20" y="140"
+    font-family="'Arial Black','Helvetica Neue',sans-serif"
+    font-size="172" font-weight="900" font-style="italic"
+    fill="#1e2230" letter-spacing="-6">M</text>
+
+  <!-- Orange left accent bar -->
+  <rect x="20" y="44" width="6" height="72" rx="2" fill="#FF5F1F"/>
+
+  <!-- MPOWER upright bold wordmark -->
+  <text x="34" y="106"
+    font-family="'Arial Black','Helvetica Neue',sans-serif"
+    font-size="68" font-weight="900"
+    fill="#F0F2F5" letter-spacing="-1">MPOWER</text>
+
+  <!-- Neon lime angled slash bar -->
+  <polygon points="34,116 490,116 487,125 31,125" fill="#C8F135"/>
+
+  <!-- FITNESS — right-aligned, tracked out, proper size -->
+  <text x="490" y="142"
+    text-anchor="end"
+    font-family="'Helvetica Neue',Arial,sans-serif"
+    font-size="12" font-weight="600"
+    letter-spacing="6" fill="#C8F135">FITNESS</text>
+
+  <!-- Dot accent top-right -->
+  <circle cx="510" cy="30" r="4.5" fill="#C8F135"/>
+  <circle cx="522" cy="30" r="2.5" fill="#C8F135" opacity="0.45"/>
+  <circle cx="531" cy="30" r="1.5" fill="#C8F135" opacity="0.2"/>
+</svg>

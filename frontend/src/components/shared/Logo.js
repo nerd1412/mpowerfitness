@@ -1,22 +1,59 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 
-/* ─── Lightning bolt icon paths ─────────────────────────────────── */
-const BoltPath = () => (
-  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width:'100%', height:'100%' }}>
-    <path
-      d="M13 2L4.5 13.5H11L10 22L20.5 9.5H14L13 2Z"
-      fill="#C8F135"
-      stroke="#C8F135"
-      strokeWidth="0.5"
-      strokeLinejoin="round"
-    />
-  </svg>
-);
+/*
+ * MP Monogram Icon
+ * Design principles applied:
+ *  - Geometric, single-weight strokes for scalability
+ *  - Negative space letter "P" implied inside "M" strokes
+ *  - Neon-lime accent on connective bridge for brand colour
+ *  - Renders crisply from 20px to 200px
+ */
+const MPMark = ({ size = 32 }) => {
+  const s = size;
+  return (
+    <svg
+      viewBox="0 0 40 40"
+      width={s}
+      height={s}
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+    >
+      {/* Background square with rounded corners */}
+      <rect width="40" height="40" rx="9" fill="#0A0B0D" />
 
-/* ─── Full logo (icon + wordmark) ───────────────────────────────── */
+      {/* M strokes — two outer legs + centre peak */}
+      {/* Left outer leg */}
+      <path d="M7 31 L7 10" stroke="#F0F2F5" strokeWidth="3.2" strokeLinecap="round" />
+      {/* Left roof slope */}
+      <path d="M7 10 L20 21" stroke="#F0F2F5" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round" />
+      {/* Right roof slope */}
+      <path d="M20 21 L33 10" stroke="#F0F2F5" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round" />
+      {/* Right outer leg (shortened — becomes P vertical) */}
+      <path d="M33 10 L33 31" stroke="#F0F2F5" strokeWidth="3.2" strokeLinecap="round" />
+
+      {/* Neon-lime P bowl – horizontal bridge gives P shape on right column */}
+      <path
+        d="M33 10 Q38 18 33 23"
+        stroke="#C8F135"
+        strokeWidth="2.8"
+        strokeLinecap="round"
+        fill="none"
+      />
+      {/* Horizontal midbar connecting P bowl to vertical */}
+      <line x1="33" y1="23" x2="33" y2="23" stroke="#C8F135" strokeWidth="2.8" strokeLinecap="round" />
+
+      {/* Accent dot — brand punctuation (bottom-left) */}
+      <circle cx="7" cy="35" r="1.8" fill="#C8F135" />
+    </svg>
+  );
+};
+
+/* ─── Full logo (icon + wordmark) ─────────────────────────────────── */
 export const LogoFull = ({ height = 44, linkTo = '/', style }) => {
   const scale = height / 44;
+  const iconSize = Math.round(36 * scale);
 
   const logo = (
     <div
@@ -29,61 +66,43 @@ export const LogoFull = ({ height = 44, linkTo = '/', style }) => {
         ...style,
       }}
     >
-      {/* Icon box */}
-      <div style={{
-        width:  Math.round(38 * scale),
-        height: Math.round(38 * scale),
-        borderRadius: Math.round(9 * scale),
-        background: '#07080A',
-        border: '1.5px solid rgba(200,241,53,0.35)',
-        boxShadow: '0 0 14px rgba(200,241,53,0.15)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: Math.round(7 * scale),
-        flexShrink: 0,
-      }}>
-        <BoltPath />
-      </div>
+      {/* MP Icon */}
+      <MPMark size={iconSize} />
 
-      {/* Wordmark */}
-      <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1, gap: Math.round(2 * scale) }}>
-        {/* M + POWER on same line */}
+      {/* Wordmark: Mpower Fitness */}
+      <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1 }}>
+        {/* "Mpower" — one visual unit */}
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 0 }}>
           <span style={{
             fontFamily: "'Outfit', 'Inter', 'Helvetica Neue', Arial, sans-serif",
             fontWeight: 900,
-            fontSize: Math.round(22 * scale),
-            letterSpacing: '-0.03em',
+            fontSize: Math.round(20 * scale),
+            letterSpacing: '-0.02em',
             color: '#C8F135',
             lineHeight: 1,
           }}>M</span>
           <span style={{
             fontFamily: "'Outfit', 'Inter', 'Helvetica Neue', Arial, sans-serif",
             fontWeight: 800,
-            fontSize: Math.round(18 * scale),
-            letterSpacing: '0.04em',
+            fontSize: Math.round(20 * scale),
+            letterSpacing: '-0.02em',
             color: '#F0F2F5',
             lineHeight: 1,
-          }}>POWER</span>
+          }}>power</span>
         </div>
 
-        {/* Tagline */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: Math.round(4 * scale) }}>
-          <div style={{ height: 1, width: Math.round(10 * scale), background: '#C8F135', opacity: 0.5 }} />
-          <span style={{
-            fontFamily: "'Outfit', 'Inter', 'Helvetica Neue', Arial, sans-serif",
-            fontWeight: 500,
-            fontSize: Math.round(7 * scale),
-            letterSpacing: '0.12em',
-            color: '#C8F135',
-            opacity: 0.75,
-            lineHeight: 1,
-            textTransform: 'uppercase',
-            whiteSpace: 'nowrap',
-          }}>strength · health · nutrition</span>
-          <div style={{ height: 1, width: Math.round(10 * scale), background: '#C8F135', opacity: 0.5 }} />
-        </div>
+        {/* "Fitness" sub-label */}
+        <span style={{
+          fontFamily: "'Outfit', 'Inter', 'Helvetica Neue', Arial, sans-serif",
+          fontWeight: 500,
+          fontSize: Math.round(9 * scale),
+          letterSpacing: '0.16em',
+          color: '#C8F135',
+          opacity: 0.80,
+          lineHeight: 1,
+          textTransform: 'uppercase',
+          marginTop: Math.round(2 * scale),
+        }}>Fitness</span>
       </div>
     </div>
   );
@@ -96,24 +115,10 @@ export const LogoFull = ({ height = 44, linkTo = '/', style }) => {
   );
 };
 
-/* ─── Icon-only (collapsed sidebar) ────────────────────────────── */
+/* ─── Icon-only (collapsed sidebar / favicon) ───────────────────── */
 export const LogoIcon = ({ size = 40, style }) => (
-  <div style={{
-    width: size,
-    height: size,
-    borderRadius: Math.round(size * 0.225),
-    background: '#07080A',
-    border: '1.5px solid rgba(200,241,53,0.35)',
-    boxShadow: '0 0 12px rgba(200,241,53,0.12)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: Math.round(size * 0.18),
-    flexShrink: 0,
-    userSelect: 'none',
-    ...style,
-  }}>
-    <BoltPath />
+  <div style={{ display: 'inline-flex', ...style }}>
+    <MPMark size={size} />
   </div>
 );
 

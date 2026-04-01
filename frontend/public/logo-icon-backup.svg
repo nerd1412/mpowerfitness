@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80" fill="none">
+  <rect width="80" height="80" rx="13" fill="#07080A"/>
+  <!-- Ghost italic M -->
+  <text x="-6" y="75"
+    font-family="'Arial Black','Helvetica Neue',sans-serif"
+    font-size="78" font-weight="900" font-style="italic"
+    fill="#1e2230" letter-spacing="-3">M</text>
+  <!-- Orange left bar -->
+  <rect x="10" y="22" width="4" height="38" rx="1.5" fill="#FF5F1F"/>
+  <!-- Upright M -->
+  <text x="16" y="56"
+    font-family="'Arial Black','Helvetica Neue',sans-serif"
+    font-size="38" font-weight="900"
+    fill="#F0F2F5" letter-spacing="-1">M</text>
+  <!-- Neon slash -->
+  <polygon points="14,60 68,60 66,67 12,67" fill="#C8F135"/>
+</svg>
