@@ -24,8 +24,6 @@ const TrainerLogin = () => {
     }
   };
 
-  const fillDemo = () => setForm({ email:'arjun@mpowerfitness.com', password:'Trainer@123' });
-
   return (
     <div style={{ minHeight:'100vh', background:'var(--deep-black)', display:'flex', alignItems:'center', justifyContent:'center', padding:'24px', position:'relative', overflow:'hidden' }}>
       <div style={{ position:'absolute', top:'15%', left:'8%', width:450, height:450, background:'radial-gradient(circle, rgba(255,95,31,0.07) 0%, transparent 65%)', pointerEvents:'none' }}/>
@@ -61,23 +59,6 @@ const TrainerLogin = () => {
               {isLoading ? 'Signing in…' : 'Sign In as Trainer'}
             </button>
           </form>
-
-          <div style={{ margin:'20px 0', display:'flex', alignItems:'center', gap:12 }}>
-            <div style={{ flex:1, height:1, background:'var(--border)' }}/>
-            <span style={{ fontSize:12, color:'var(--text-muted)' }}>Demo</span>
-            <div style={{ flex:1, height:1, background:'var(--border)' }}/>
-          </div>
-
-          <button type="button" onClick={fillDemo} style={{
-            width:'100%', padding:'11px', background:'rgba(255,95,31,0.06)',
-            border:'1px solid rgba(255,95,31,0.18)', borderRadius:10, cursor:'pointer', textAlign:'left', transition:'background 0.15s'
-          }}
-            onMouseEnter={e => e.currentTarget.style.background='rgba(255,95,31,0.1)'}
-            onMouseLeave={e => e.currentTarget.style.background='rgba(255,95,31,0.06)'}
-          >
-            <div style={{ fontSize:11, color:'var(--electric-orange)', fontWeight:600, textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:5 }}>Fill demo credentials</div>
-            <div style={{ fontSize:13, color:'var(--text-secondary)' }}>arjun@mpowerfitness.com &nbsp;·&nbsp; Trainer@123</div>
-          </button>
 
           <p style={{ textAlign:'center', color:'var(--text-secondary)', fontSize:14, marginTop:24 }}>
             New trainer? <Link to="/trainer/register" style={{ color:'var(--electric-orange)', fontWeight:600 }}>Apply to join</Link>

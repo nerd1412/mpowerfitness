@@ -32,4 +32,24 @@ const socketHandler = (io) => {
   });
 };
 
-module.exports = { socketHandler };
+/**
+ * Emit a real-time notification to the appropriate socket room.
+ * @param {Object} io - Socket.io server instance
+ * @param {string} recipientModel - 'User' | 'Trainer' | 'Admin'
+ * @param {string} recipientId - recipient UUID
+ * @param {Object} notification - the created Notification record (toJSON)
+ */
+const emitNotification = (io, recipientModel, recipientId, notification) => {
+  if (!io) return;
+  try {
+    if (recipientModel === 'Admin') {
+      io.to('admin_room').emit('new_notification', notification);
+    } else if (recipientModel === 'Trainer') {
+      io.to(`trainer_${recipientId}`).emit('new_notification', notification);
+    } else {
+      io.to(`user_${recipientId}`).emit('new_notification', notification);
+    }
+  } catch (_) {}
+};
+
+module.exports = { socketHandler, emitNotification };

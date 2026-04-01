@@ -1,6 +1,7 @@
 const { Op } = require('sequelize');
 const { Booking, Payment, User, Trainer, Notification } = require('../models/index');
 const { checkAndAwardBadges } = require('../utils/gamification');
+const { emitNotification } = require('../utils/socketHandler');
 
 const getAvailability = async (req, res) => {
   try {
@@ -56,7 +57,8 @@ const createBooking = async (req, res) => {
       notes,
     });
 
-    await Notification.create({
+    const io = req.app.get('io');
+    const bookingNotif = await Notification.create({
       recipientId: trainerId,
       recipientModel: 'Trainer',
       title: 'New Session Booking',
@@ -64,8 +66,7 @@ const createBooking = async (req, res) => {
       type: 'new_client',
       data: JSON.stringify({ bookingId: booking.id }),
     });
-
-    const io = req.app.get('io');
+    emitNotification(io, 'Trainer', trainerId, bookingNotif.toJSON());
     if (io) io.to(`trainer_${trainerId}`).emit('new_booking', { booking: booking.toJSON() });
 
     // Award first-booking badge
@@ -167,12 +168,13 @@ const updateBookingStatus = async (req, res) => {
       },
     };
     if (notifMap[status] && user) {
-      await Notification.create({
+      const io = req.app.get('io');
+      const statusNotif = await Notification.create({
         recipientId: user.id,
         recipientModel: 'User',
         ...notifMap[status],
       });
-      const io = req.app.get('io');
+      emitNotification(io, 'User', user.id, statusNotif.toJSON());
       if (io) io.to(`user_${user.id}`).emit('booking_update', { bookingId: booking.id, status });
     }
 
@@ -225,13 +227,21 @@ const rateBooking = async (req, res) => {
     booking.review = review;
     await booking.save();
 
-    // Update trainer average rating
+    // Update trainer average rating + notify
     const trainer = await Trainer.findByPk(booking.trainerId);
     if (trainer) {
       const newTotal = (trainer.totalRatings || 0) + 1;
       trainer.rating = (trainer.rating * (trainer.totalRatings || 0) + rating) / newTotal;
       trainer.totalRatings = newTotal;
       await trainer.save();
+      const stars = '★'.repeat(rating) + '☆'.repeat(5 - rating);
+      const ratingNotif = await Notification.create({
+        recipientId: trainer.id, recipientModel: 'Trainer',
+        title: 'New Session Rating',
+        message: `A client rated your session ${stars} (${rating}/5).${review ? ` "${review}"` : ''}`,
+        type: 'system',
+      });
+      emitNotification(req.app.get('io'), 'Trainer', trainer.id, ratingNotif.toJSON());
     }
 
     res.json({ success: true, booking });

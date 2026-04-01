@@ -5,6 +5,8 @@ const { protect, authorize, hashPassword } = require('../middleware/auth');
 const { User, Trainer, Admin, Booking, Payment, Program, NutritionPlan, Workout, Notification, WorkoutSession, Blog } = require('../models/index');
 
 
+const { emitNotification } = require('../utils/socketHandler');
+
 const adminAuth = [protect, authorize('admin', 'superadmin')];
 
 // ── ADMIN DIRECT-ADD TRAINER ───────────────────────────────────
@@ -127,12 +129,13 @@ router.patch('/trainers/:id/approve', ...adminAuth, async (req, res) => {
     if (!trainer) return res.status(404).json({ success: false, message: 'Trainer not found' });
     trainer.isApproved = true;
     await trainer.save();
-    await Notification.create({
+    const approvalNotif = await Notification.create({
       recipientId: trainer.id, recipientModel: 'Trainer',
       title: 'Account Approved!',
       message: 'Your trainer account has been approved. You can now log in and start accepting clients.',
       type: 'system'
     });
+    emitNotification(req.app.get('io'), 'Trainer', trainer.id, approvalNotif.toJSON());
     res.json({ success: true, message: 'Trainer approved', trainer });
   } catch (err) { res.status(500).json({ success: false, message: err.message }); }
 });
@@ -145,6 +148,15 @@ router.patch('/trainers/:id/reject', ...adminAuth, async (req, res) => {
     trainer.isApproved = false;
     trainer.isActive = false;
     await trainer.save();
+    const rejectNotif = await Notification.create({
+      recipientId: trainer.id, recipientModel: 'Trainer',
+      title: 'Application Update',
+      message: reason
+        ? `Your trainer application was not approved. Reason: ${reason}`
+        : 'Your trainer application was not approved at this time. You may reapply after addressing any concerns.',
+      type: 'system',
+    });
+    emitNotification(req.app.get('io'), 'Trainer', trainer.id, rejectNotif.toJSON());
     res.json({ success: true, message: 'Trainer rejected' });
   } catch (err) { res.status(500).json({ success: false, message: err.message }); }
 });
@@ -201,14 +213,47 @@ router.post('/users/:id/assign-trainer', ...adminAuth, async (req, res) => {
         await trainer.save();
       }
     }
+    const previousTrainerId = user.assignedTrainerId;
     user.assignedTrainerId = trainerId || null;
     await user.save();
-    await Notification.create({
+
+    // Remove user from previous trainer's clients list if trainer changed
+    if (previousTrainerId && previousTrainerId !== trainerId) {
+      const prevTrainer = await Trainer.findByPk(previousTrainerId);
+      if (prevTrainer) {
+        prevTrainer.clients = (prevTrainer.clients || []).filter(id => id !== req.params.id);
+        await prevTrainer.save();
+      }
+    }
+
+    // Notify user
+    const userNotif = await Notification.create({
       recipientId: user.id, recipientModel: 'User',
-      title: 'Trainer Assigned',
-      message: trainerId ? 'A trainer has been assigned to your account.' : 'Your trainer assignment has been updated.',
-      type: 'system'
+      title: trainerId ? 'Trainer Assigned to You' : 'Trainer Assignment Removed',
+      message: trainerId
+        ? `A certified trainer has been assigned to your account and is ready to support your fitness journey.`
+        : 'Your trainer assignment has been removed.',
+      type: 'system',
     });
+    emitNotification(req.app.get('io'), 'User', user.id, userNotif.toJSON());
+
+    // Notify assigned trainer
+    if (trainerId) {
+      const trainer = await Trainer.findByPk(trainerId);
+      if (trainer) {
+        await Notification.create({
+          recipientId: trainer.id, recipientModel: 'Trainer',
+          title: 'New Client Assigned',
+          message: `${user.name} has been assigned to you as a client by the admin. Check your clients list.`,
+          type: 'new_client',
+          actionUrl: '/trainer/clients',
+          data: JSON.stringify({ userId: user.id, userName: user.name }),
+        });
+        const io = req.app.get('io');
+        if (io) io.to(`trainer_${trainerId}`).emit('new_client', { userId: user.id, userName: user.name });
+      }
+    }
+
     res.json({ success: true, message: 'Trainer assigned', user });
   } catch (err) { res.status(500).json({ success: false, message: err.message }); }
 });

@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { body, validationResult } = require('express-validator');
-const { User, Trainer, Admin } = require('../models/index');
+const { User, Trainer, Admin, Notification } = require('../models/index');
 const { generateTokens, hashPassword, comparePassword, protect, refreshTokenMiddleware } = require('../middleware/auth');
 
 const validate = (req, res, next) => {
@@ -101,6 +101,25 @@ router.post('/trainer/register', [
       bio, sessionRate, monthlyRate,
       isApproved: false,
     });
+
+    // Notify all active admins about the new trainer application
+    try {
+      const { emitNotification } = require('../utils/socketHandler');
+      const admins = await Admin.findAll({ where: { isActive: true } });
+      await Promise.all(admins.map(async admin => {
+        const notif = await Notification.create({
+          recipientId: admin.id,
+          recipientModel: 'Admin',
+          title: 'New Trainer Application',
+          message: `${name} (${email}) has applied to become a trainer. Review and approve or reject their application.`,
+          type: 'system',
+          actionUrl: '/admin/trainers',
+          data: JSON.stringify({ trainerId: trainer.id, trainerName: name, trainerEmail: email }),
+        });
+        emitNotification(req.app.get('io'), 'Admin', admin.id, notif.toJSON());
+      }));
+    } catch (_) { /* non-fatal */ }
+
     res.status(201).json({ success: true, message: 'Registration submitted. Awaiting admin approval.', trainer: { id: trainer.id, name: trainer.name, email: trainer.email, isApproved: false } });
   } catch (err) { res.status(500).json({ success: false, message: err.message }); }
 });

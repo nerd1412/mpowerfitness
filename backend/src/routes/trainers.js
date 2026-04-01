@@ -1,7 +1,7 @@
 const express = require('express');
 const { protect, authorize } = require('../middleware/auth');
 const { Trainer, User, Booking } = require('../models/index');
-const { Op } = require('sequelize');
+const { Op, literal } = require('sequelize');
 
 const router = express.Router();
 
@@ -31,15 +31,30 @@ router.get('/', async (req, res) => {
 
 router.get('/my-clients', protect, authorize('trainer'), async (req, res) => {
   try {
+    // 1. Clients from confirmed/completed bookings
     const bookings = await Booking.findAll({
       where: { trainerId: req.user.id, status: { [Op.in]: ['confirmed', 'completed'] } },
       attributes: ['userId'],
     });
-    const userIds = [...new Set(bookings.map(b => b.userId))];
-    const clients = await User.findAll({
-      where: { id: { [Op.in]: userIds } },
-      attributes: { exclude: ['password', 'refreshToken'] },
+    const bookingUserIds = bookings.map(b => b.userId);
+
+    // 2. Clients directly assigned by admin (assignedTrainerId)
+    const assignedUsers = await User.findAll({
+      where: { assignedTrainerId: req.user.id },
+      attributes: ['id'],
     });
+    const assignedUserIds = assignedUsers.map(u => u.id);
+
+    // Merge both sets, dedup
+    const allUserIds = [...new Set([...bookingUserIds, ...assignedUserIds])];
+
+    const clients = allUserIds.length
+      ? await User.findAll({
+          where: { id: { [Op.in]: allUserIds } },
+          attributes: { exclude: ['password', 'refreshToken'] },
+        })
+      : [];
+
     res.json({ success: true, clients });
   } catch (err) { res.status(500).json({ success: false, message: err.message }); }
 });

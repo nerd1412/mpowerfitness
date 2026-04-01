@@ -32,8 +32,6 @@ const UserLogin = () => {
     }
   };
 
-  const fillDemo = () => setForm({ email: 'user@mpowerfitness.com', password: 'User@123456' });
-
   return (
     <div style={{ minHeight:'100vh', background:'var(--deep-black)', display:'flex', alignItems:'center', justifyContent:'center', padding:'24px', position:'relative', overflow:'hidden' }}>
       <div style={{ position:'absolute', top:'15%', right:'10%', width:500, height:500, background:'radial-gradient(circle, rgba(200,241,53,0.06) 0%, transparent 65%)', pointerEvents:'none' }}/>
@@ -84,24 +82,6 @@ const UserLogin = () => {
               ) : 'Sign In'}
             </button>
           </form>
-
-          <div style={{ margin:'20px 0', display:'flex', alignItems:'center', gap:12 }}>
-            <div style={{ flex:1, height:1, background:'var(--border)' }}/>
-            <span style={{ fontSize:12, color:'var(--text-muted)' }}>Demo</span>
-            <div style={{ flex:1, height:1, background:'var(--border)' }}/>
-          </div>
-
-          <button type="button" onClick={fillDemo} style={{
-            width:'100%', padding:'11px', background:'rgba(200,241,53,0.06)',
-            border:'1px solid rgba(200,241,53,0.18)', borderRadius:10, cursor:'pointer',
-            textAlign:'left', transition:'background 0.15s'
-          }}
-            onMouseEnter={e => e.currentTarget.style.background='rgba(200,241,53,0.1)'}
-            onMouseLeave={e => e.currentTarget.style.background='rgba(200,241,53,0.06)'}
-          >
-            <div style={{ fontSize:11, color:'var(--neon-lime)', fontWeight:600, textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:5 }}>Fill demo credentials</div>
-            <div style={{ fontSize:13, color:'var(--text-secondary)' }}>user@mpowerfitness.com &nbsp;·&nbsp; User@123456</div>
-          </button>
 
           <p style={{ textAlign:'center', color:'var(--text-secondary)', fontSize:14, marginTop:24 }}>
             No account? <Link to="/register" style={{ color:'var(--neon-lime)', fontWeight:600 }}>Sign up free</Link>
