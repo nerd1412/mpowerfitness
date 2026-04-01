@@ -1,0 +1,45 @@
+# Dependencies
+node_modules/
+*/node_modules/
+
+# Build output
+frontend/build/
+*/build/
+
+# Environment - NEVER commit these
+.env
+*/.env
+backend/.env
+frontend/.env
+frontend/.env.local
+frontend/.env.production
+
+# Database (local dev)
+backend/data/*.sqlite
+backend/data/*.db
+
+# Uploads (user content - use cloud storage in prod)
+backend/uploads/avatars/*.jpg
+backend/uploads/avatars/*.png
+backend/uploads/workouts/*.jpg
+backend/uploads/workouts/*.png
+backend/uploads/progress/*.jpg
+backend/uploads/progress/*.png
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# SSL certs (never commit)
+nginx/ssl/*.pem
+nginx/ssl/*.crt
+nginx/ssl/*.key
