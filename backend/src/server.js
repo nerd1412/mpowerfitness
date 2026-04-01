@@ -74,14 +74,20 @@ app.use('/api/nutrition',     nutritionRouter);
 app.use('/api/chat',          chatRouter);
 app.use('/api/blogs',         blogsRouter);
 
-app.get('/health', (req, res) => res.json({ status:'healthy', service:'Mpower Fitness API', version:'2.1.0', db:'sqlite', env: process.env.NODE_ENV }));
+app.get('/health', (req, res) => res.json({ 
+  status: 'healthy', 
+  service: 'Mpower Fitness API', 
+  version: '2.1.0', 
+  db: sequelize.getDialect(), 
+  env: process.env.NODE_ENV 
+}));
 app.use((req, res) => res.status(404).json({ success:false, message:`Route ${req.method} ${req.path} not found` }));
 app.use((err, req, res, next) => { console.error(err.stack); res.status(err.statusCode||500).json({ success:false, message: err.message||'Internal server error' }); });
 
 const startServer = async () => {
   try {
     await sequelize.sync({ alter: process.env.NODE_ENV !== 'production' });
-    console.log('✅ Database ready (SQLite)');
+    console.log(`✅ Database ready (${sequelize.getDialect()})`);
     await connectRedis();
     const { User, Admin } = require('./models/index');
     const [uC, aC] = await Promise.all([User.count(), Admin.count()]);
