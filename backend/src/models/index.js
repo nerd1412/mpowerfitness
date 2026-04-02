@@ -363,9 +363,25 @@ const ConsultationRequest = sequelize.define('ConsultationRequest', {
   assignedTrainerId:DataTypes.UUID,
 }, { tableName: 'consultation_requests' });
 
+// ==================== AUDIT LOG ====================
+const AuditLog = sequelize.define('AuditLog', {
+  id:          { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  actorId:     { type: DataTypes.UUID, allowNull: false },
+  actorModel:  { type: DataTypes.STRING, defaultValue: 'Admin' },  // Admin
+  actorName:   DataTypes.STRING,
+  action:      { type: DataTypes.STRING, allowNull: false },  // e.g. TRAINER_APPROVED, PLAN_ASSIGNED
+  targetModel: DataTypes.STRING,   // e.g. Trainer, User, NutritionPlan
+  targetId:    DataTypes.UUID,
+  targetName:  DataTypes.STRING,
+  detail:      { type: DataTypes.TEXT, defaultValue: '{}',
+    get() { try { return JSON.parse(this.getDataValue('detail')); } catch { return {}; } },
+    set(v) { this.setDataValue('detail', JSON.stringify(v)); } },
+  ipAddress:   DataTypes.STRING,
+}, { tableName: 'audit_logs' });
+
 module.exports = {
   sequelize, User, Trainer, Admin, Blog,
   Workout, WorkoutSession, Booking, Progress,
   NutritionPlan, Program, Payment, Message, Conversation, Notification,
-  CommunityGroup, CommunityPost, ConsultationRequest,
+  CommunityGroup, CommunityPost, ConsultationRequest, AuditLog,
 };

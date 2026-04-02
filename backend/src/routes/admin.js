@@ -2,10 +2,10 @@ const express = require('express');
 const router = express.Router();
 const { Op } = require('sequelize');
 const { protect, authorize, hashPassword } = require('../middleware/auth');
-const { User, Trainer, Admin, Booking, Payment, Program, NutritionPlan, Workout, Notification, WorkoutSession, Blog } = require('../models/index');
-
-
-const { emitNotification } = require('../utils/socketHandler');
+const { User, Trainer, Admin, Booking, Payment, Program, NutritionPlan, Workout, Blog, AuditLog } = require('../models/index');
+const trainerService     = require('../services/trainerService');
+const notificationService = require('../services/notificationService');
+const { auditLog }        = require('../middleware/audit');
 
 const adminAuth = [protect, authorize('admin', 'superadmin')];
 
@@ -125,40 +125,19 @@ router.get('/trainers/:id', ...adminAuth, async (req, res) => {
 
 router.patch('/trainers/:id/approve', ...adminAuth, async (req, res) => {
   try {
-    const trainer = await Trainer.findByPk(req.params.id);
-    if (!trainer) return res.status(404).json({ success: false, message: 'Trainer not found' });
-    trainer.isApproved = true;
-    await trainer.save();
-    const approvalNotif = await Notification.create({
-      recipientId: trainer.id, recipientModel: 'Trainer',
-      title: 'Account Approved!',
-      message: 'Your trainer account has been approved. You can now log in and start accepting clients.',
-      type: 'system'
-    });
-    emitNotification(req.app.get('io'), 'Trainer', trainer.id, approvalNotif.toJSON());
+    const trainer = await trainerService.approve(req.params.id, req.app.get('io'));
+    auditLog(req, 'TRAINER_APPROVED', { model:'Trainer', id:trainer.id, name:trainer.name });
     res.json({ success: true, message: 'Trainer approved', trainer });
-  } catch (err) { res.status(500).json({ success: false, message: err.message }); }
+  } catch (err) { res.status(err.statusCode || 500).json({ success: false, message: err.message }); }
 });
 
 router.patch('/trainers/:id/reject', ...adminAuth, async (req, res) => {
   try {
     const { reason } = req.body;
-    const trainer = await Trainer.findByPk(req.params.id);
-    if (!trainer) return res.status(404).json({ success: false, message: 'Trainer not found' });
-    trainer.isApproved = false;
-    trainer.isActive = false;
-    await trainer.save();
-    const rejectNotif = await Notification.create({
-      recipientId: trainer.id, recipientModel: 'Trainer',
-      title: 'Application Update',
-      message: reason
-        ? `Your trainer application was not approved. Reason: ${reason}`
-        : 'Your trainer application was not approved at this time. You may reapply after addressing any concerns.',
-      type: 'system',
-    });
-    emitNotification(req.app.get('io'), 'Trainer', trainer.id, rejectNotif.toJSON());
+    const trainer = await trainerService.reject(req.params.id, reason, req.app.get('io'));
+    auditLog(req, 'TRAINER_REJECTED', { model:'Trainer', id:trainer.id, name:trainer.name }, { reason });
     res.json({ success: true, message: 'Trainer rejected' });
-  } catch (err) { res.status(500).json({ success: false, message: err.message }); }
+  } catch (err) { res.status(err.statusCode || 500).json({ success: false, message: err.message }); }
 });
 
 router.patch('/trainers/:id/toggle-active', ...adminAuth, async (req, res) => {
@@ -201,61 +180,10 @@ router.get('/users/:id', ...adminAuth, async (req, res) => {
 router.post('/users/:id/assign-trainer', ...adminAuth, async (req, res) => {
   try {
     const { trainerId } = req.body;
-    const user = await User.findByPk(req.params.id);
-    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
-    if (trainerId) {
-      const trainer = await Trainer.findByPk(trainerId);
-      if (!trainer) return res.status(404).json({ success: false, message: 'Trainer not found' });
-      // Add user to trainer's clients
-      const clients = trainer.clients || [];
-      if (!clients.includes(req.params.id)) {
-        trainer.clients = [...clients, req.params.id];
-        await trainer.save();
-      }
-    }
-    const previousTrainerId = user.assignedTrainerId;
-    user.assignedTrainerId = trainerId || null;
-    await user.save();
-
-    // Remove user from previous trainer's clients list if trainer changed
-    if (previousTrainerId && previousTrainerId !== trainerId) {
-      const prevTrainer = await Trainer.findByPk(previousTrainerId);
-      if (prevTrainer) {
-        prevTrainer.clients = (prevTrainer.clients || []).filter(id => id !== req.params.id);
-        await prevTrainer.save();
-      }
-    }
-
-    // Notify user
-    const userNotif = await Notification.create({
-      recipientId: user.id, recipientModel: 'User',
-      title: trainerId ? 'Trainer Assigned to You' : 'Trainer Assignment Removed',
-      message: trainerId
-        ? `A certified trainer has been assigned to your account and is ready to support your fitness journey.`
-        : 'Your trainer assignment has been removed.',
-      type: 'system',
-    });
-    emitNotification(req.app.get('io'), 'User', user.id, userNotif.toJSON());
-
-    // Notify assigned trainer
-    if (trainerId) {
-      const trainer = await Trainer.findByPk(trainerId);
-      if (trainer) {
-        await Notification.create({
-          recipientId: trainer.id, recipientModel: 'Trainer',
-          title: 'New Client Assigned',
-          message: `${user.name} has been assigned to you as a client by the admin. Check your clients list.`,
-          type: 'new_client',
-          actionUrl: '/trainer/clients',
-          data: JSON.stringify({ userId: user.id, userName: user.name }),
-        });
-        const io = req.app.get('io');
-        if (io) io.to(`trainer_${trainerId}`).emit('new_client', { userId: user.id, userName: user.name });
-      }
-    }
-
+    const user = await trainerService.assignToUser(req.params.id, trainerId, req.app.get('io'));
+    auditLog(req, 'TRAINER_ASSIGNED_TO_USER', { model:'User', id:user.id, name:user.name }, { trainerId });
     res.json({ success: true, message: 'Trainer assigned', user });
-  } catch (err) { res.status(500).json({ success: false, message: err.message }); }
+  } catch (err) { res.status(err.statusCode || 500).json({ success: false, message: err.message }); }
 });
 
 router.patch('/users/:id/toggle-active', ...adminAuth, async (req, res) => {
@@ -313,15 +241,14 @@ router.patch('/workouts/:id/assign', ...adminAuth, async (req, res) => {
     if (!remove) {
       const user = await User.findByPk(userId);
       if (user) {
-        const notif = await Notification.create({
-          recipientId: userId, recipientModel: 'User',
+        await notificationService.send(req.app.get('io'), 'User', userId, {
           title: 'New Workout Plan Assigned',
-          message: `A workout plan "${workout.title}" has been assigned to you by your trainer.`,
+          message: `A workout plan "${workout.title}" has been assigned to you.`,
           type: 'system', actionUrl: '/user/workouts',
         });
-        emitNotification(req.app.get('io'), 'User', userId, notif.toJSON());
       }
     }
+    auditLog(req, remove ? 'WORKOUT_UNASSIGNED' : 'WORKOUT_ASSIGNED', { model:'Workout', id:workout.id, name:workout.title }, { userId, remove });
     res.json({ success: true, message: remove ? 'Assignment removed' : 'Workout assigned', assignedTo: workout.assignedTo });
   } catch (err) { res.status(500).json({ success: false, message: err.message }); }
 });
@@ -371,15 +298,14 @@ router.patch('/nutrition/:id/assign', ...adminAuth, async (req, res) => {
     if (!remove) {
       const user = await User.findByPk(userId);
       if (user) {
-        const notif = await Notification.create({
-          recipientId: userId, recipientModel: 'User',
+        await notificationService.send(req.app.get('io'), 'User', userId, {
           title: 'New Nutrition Plan Assigned',
           message: `A personalised nutrition plan "${plan.title}" has been assigned to you.`,
           type: 'system', actionUrl: '/user/nutrition',
         });
-        emitNotification(req.app.get('io'), 'User', userId, notif.toJSON());
       }
     }
+    auditLog(req, remove ? 'NUTRITION_UNASSIGNED' : 'NUTRITION_ASSIGNED', { model:'NutritionPlan', id:plan.id, name:plan.title }, { userId, remove });
     res.json({ success: true, message: remove ? 'Assignment removed' : 'Plan assigned', assignedTo: plan.assignedTo });
   } catch (err) { res.status(500).json({ success: false, message: err.message }); }
 });
@@ -567,3 +493,19 @@ router.delete('/blogs/:id', ...adminAuth, async (req, res) => {
   } catch(err) { res.status(500).json({ success:false, message:err.message }); }
 });
 
+
+
+// ── AUDIT LOG ──────────────────────────────────────────────────
+router.get('/audit-logs', ...adminAuth, async (req, res) => {
+  try {
+    const { action, limit = 50, offset = 0 } = req.query;
+    const where = action ? { action } : {};
+    const logs = await AuditLog.findAndCountAll({
+      where,
+      order: [['createdAt', 'DESC']],
+      limit: Math.min(parseInt(limit) || 50, 200),
+      offset: parseInt(offset) || 0,
+    });
+    res.json({ success: true, total: logs.count, logs: logs.rows });
+  } catch (err) { res.status(500).json({ success: false, message: err.message }); }
+});

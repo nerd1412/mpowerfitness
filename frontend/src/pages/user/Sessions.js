@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import api from '../../utils/api';
 import useAuthStore from '../../store/authStore';
+import VideoCall from '../../components/shared/VideoCall';
 
 const STATUS_COLOR = {
   confirmed: 'var(--success)',
@@ -36,10 +37,12 @@ const isFuture = (d) => new Date(d + 'T23:59:59') > Date.now();
 const isPast   = (d) => !isFuture(d);
 
 /* ── Session card ─────────────────────────────────────────────── */
-const SessionCard = ({ booking, onCancel }) => {
+const SessionCard = ({ booking, onCancel, onJoinCall }) => {
   const today = isToday(booking.sessionDate);
   const future = isFuture(booking.sessionDate);
   const statusColor = STATUS_COLOR[booking.status] || 'var(--t3)';
+  const isVideoSession = booking.sessionType === 'online_video';
+  const canJoinCall = isVideoSession && booking.status === 'confirmed';
 
   return (
     <div style={{
@@ -100,6 +103,17 @@ const SessionCard = ({ booking, onCancel }) => {
 
       {/* Actions */}
       <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'flex-end' }}>
+        {canJoinCall && (
+          <button
+            className="btn btn-sm"
+            style={{ fontSize: 11, fontWeight: 700,
+              background: 'rgba(200,241,53,0.15)', border: '1.5px solid rgba(200,241,53,0.4)',
+              color: 'var(--lime)' }}
+            onClick={() => onJoinCall(booking)}
+          >
+            📹 Join Call
+          </button>
+        )}
         {booking.trainer?.id && (
           <Link to="/user/chat" state={{ trainerId: booking.trainer.id }}
             className="btn btn-ghost btn-sm" style={{ fontSize: 11 }}>
@@ -131,6 +145,7 @@ export default function UserSessions() {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading]   = useState(true);
   const [tab, setTab]           = useState('upcoming');
+  const [activeCall, setActiveCall] = useState(null); // { bookingId, displayName }
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -168,6 +183,14 @@ export default function UserSessions() {
   ];
 
   return (
+    <>
+    {activeCall && (
+      <VideoCall
+        bookingId={activeCall.bookingId}
+        displayName={activeCall.displayName}
+        onClose={() => setActiveCall(null)}
+      />
+    )}
     <div style={{ maxWidth: 860 }}>
       <div className="page-header">
         <div>
@@ -245,10 +268,16 @@ export default function UserSessions() {
       ) : (
         <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
           {display.map(b => (
-            <SessionCard key={b.id} booking={b} onCancel={tab === 'upcoming' ? handleCancel : null}/>
+            <SessionCard
+              key={b.id}
+              booking={b}
+              onCancel={tab === 'upcoming' ? handleCancel : null}
+              onJoinCall={(booking) => setActiveCall({ bookingId: booking.id, displayName: user?.name })}
+            />
           ))}
         </div>
       )}
     </div>
+    </>
   );
 }

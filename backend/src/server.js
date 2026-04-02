@@ -10,6 +10,23 @@ const path = require('path');
 const fs = require('fs');
 require('dotenv').config();
 
+/* ── Environment validation ───────────────────────────────────────── */
+const REQUIRED_ENV = ['JWT_SECRET'];
+const WARN_ENV     = ['UPI_ID', 'UPI_NAME', 'FRONTEND_URL'];
+
+(function validateEnv() {
+  const missing = REQUIRED_ENV.filter(k => !process.env[k]);
+  if (missing.length) {
+    console.error(`\n❌ FATAL: Missing required environment variables:\n  ${missing.join('\n  ')}\n`);
+    console.error('  Create a .env file based on .env.example and set these values.\n');
+    process.exit(1);
+  }
+  const warned = WARN_ENV.filter(k => !process.env[k]);
+  if (warned.length) {
+    console.warn(`\n⚠️  Missing recommended env vars (using defaults):\n  ${warned.join(', ')}\n`);
+  }
+})();
+
 const { sequelize } = require('./models/index');
 const { connectRedis } = require('./config/redis');
 const { socketHandler } = require('./utils/socketHandler');
@@ -85,15 +102,39 @@ app.use('/api/blogs',         blogsRouter);
 app.use('/api/community',     communityRouter);
 app.use('/api/consultations', consultationRouter);
 
-app.get('/health', (req, res) => res.json({ 
-  status: 'healthy', 
-  service: 'Mpower Fitness API', 
-  version: '2.1.0', 
-  db: sequelize.getDialect(), 
-  env: process.env.NODE_ENV 
+app.get('/health', (req, res) => res.json({
+  status: 'healthy',
+  service: 'Mpower Fitness API',
+  version: '2.1.0',
+  db: sequelize.getDialect(),
+  env: process.env.NODE_ENV
 }));
-app.use((req, res) => res.status(404).json({ success:false, message:`Route ${req.method} ${req.path} not found` }));
-app.use((err, req, res, next) => { console.error(err.stack); res.status(err.statusCode||500).json({ success:false, message: err.message||'Internal server error' }); });
+
+/* ── 404 handler ──────────────────────────────────────────────────── */
+app.use((req, res) => {
+  res.status(404).json({ success:false, message:`Route ${req.method} ${req.path} not found` });
+});
+
+/* ── Global error handler ─────────────────────────────────────────── */
+app.use((err, req, res, next) => { // eslint-disable-line no-unused-vars
+  const status  = err.statusCode || err.status || 500;
+  const message = err.message || 'Internal server error';
+
+  // Log server errors; suppress expected client errors in production
+  if (status >= 500) {
+    console.error(`[ERROR] ${req.method} ${req.path} →`, err.stack || err);
+  } else if (process.env.NODE_ENV !== 'production') {
+    console.warn(`[WARN]  ${req.method} ${req.path} → ${status}: ${message}`);
+  }
+
+  // Never leak stack traces to clients in production
+  const body = { success:false, message };
+  if (process.env.NODE_ENV !== 'production' && err.stack) {
+    body.stack = err.stack.split('\n').slice(0, 5);
+  }
+
+  res.status(status).json(body);
+});
 
 const startServer = async () => {
   try {

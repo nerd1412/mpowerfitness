@@ -2,14 +2,73 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { toast } from 'react-hot-toast';
 import api from '../../utils/api';
 
-/* App metadata: icon emoji + display name */
+/* ── SVG Brand Logos ─────────────────────────────────────────────── */
+const GooglePayLogo = () => (
+  <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width:'100%', height:'100%' }}>
+    <rect width="40" height="40" rx="8" fill="white"/>
+    <path d="M29.6 20.2c0-.6-.1-1.2-.2-1.8H20v3.4h5.4c-.2 1.2-.9 2.2-2 2.8v2.3h3.2c1.9-1.7 3-4.3 3-6.7z" fill="#4285F4"/>
+    <path d="M20 30c2.7 0 5-.9 6.6-2.5l-3.2-2.3c-.9.6-2 1-3.3.9-2.6 0-4.8-1.8-5.6-4.1h-3.3v2.4C13.1 27.8 16.3 30 20 30z" fill="#34A853"/>
+    <path d="M14.4 22c-.2-.6-.3-1.3-.3-2s.1-1.4.3-2v-2.4H11c-.7 1.5-1.1 3.1-1.1 4.4s.4 2.9 1.1 4.4l3.4-2.4z" fill="#FBBC04"/>
+    <path d="M20 14c1.5 0 2.8.5 3.8 1.5l2.8-2.8C24.8 11 22.5 10 20 10c-3.7 0-6.9 2.2-8.5 5.4l3.4 2.4C15.7 15.6 17.7 14 20 14z" fill="#EA4335"/>
+  </svg>
+);
+
+const PhonePeLogo = () => (
+  <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width:'100%', height:'100%' }}>
+    <rect width="40" height="40" rx="8" fill="#5F259F"/>
+    <path d="M22.5 11h-6.5v18l4.5-3.5V21h2c3.5 0 6.5-2.5 6.5-6 0-2.2-2-4-6.5-4zm0 7H20v-4h2.5c1.1 0 2 .9 2 2s-.9 2-2 2z" fill="white"/>
+  </svg>
+);
+
+const PaytmLogo = () => (
+  <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width:'100%', height:'100%' }}>
+    <rect width="40" height="40" rx="8" fill="#00BAF2"/>
+    <rect x="8" y="14" width="24" height="3" rx="1.5" fill="white"/>
+    <rect x="8" y="19" width="16" height="3" rx="1.5" fill="white"/>
+    <rect x="8" y="24" width="20" height="3" rx="1.5" fill="white"/>
+  </svg>
+);
+
+const BhimLogo = () => (
+  <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width:'100%', height:'100%' }}>
+    <clipPath id="bhim-clip">
+      <rect width="40" height="40" rx="8"/>
+    </clipPath>
+    <g clipPath="url(#bhim-clip)">
+      <rect width="40" height="40" fill="#FF6D00"/>
+      <rect y="13" width="40" height="14" fill="white"/>
+      <rect y="27" width="40" height="13" fill="#00A650"/>
+      <circle cx="20" cy="20" r="4.5" fill="none" stroke="#00008B" strokeWidth="1.5"/>
+      <line x1="20" y1="16" x2="20" y2="24" stroke="#00008B" strokeWidth="1.2"/>
+    </g>
+  </svg>
+);
+
+const CredLogo = () => (
+  <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width:'100%', height:'100%' }}>
+    <rect width="40" height="40" rx="8" fill="#1A1A2E"/>
+    <path d="M23 14c-3.9 0-7 3.1-7 7s3.1 7 7 7c1.9 0 3.6-.8 4.9-2l-2.1-2c-.7.7-1.7 1.1-2.8 1.1-2.4 0-4.2-1.9-4.2-4.1s1.8-4.1 4.2-4.1c1 0 2 .4 2.7 1.1l2-2.1C26.4 14.8 24.8 14 23 14z" fill="white"/>
+  </svg>
+);
+
+const JioPayLogo = () => (
+  <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width:'100%', height:'100%' }}>
+    <rect width="40" height="40" rx="8" fill="#003087"/>
+    <rect x="8" y="16" width="6" height="12" rx="2" fill="white"/>
+    <circle cx="11" cy="12" r="3" fill="white"/>
+    <rect x="17" y="11" width="6" height="17" rx="2" fill="white"/>
+    <path d="M26 16h-2v7c0 1.7 1.3 3 3 3h3" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+);
+
+/* App metadata */
 const UPI_APPS = [
-  { key:'gpay',    name:'Google Pay', icon:'G',  color:'#4285F4' },
-  { key:'phonepe', name:'PhonePe',    icon:'P',  color:'#5F259F' },
-  { key:'paytm',   name:'Paytm',      icon:'₹',  color:'#00BAF2' },
-  { key:'bhim',    name:'BHIM',       icon:'B',  color:'#FF6D00' },
-  { key:'cred',    name:'CRED',       icon:'C',  color:'#1A1A2E' },
-  { key:'jio',     name:'JioPay',     icon:'J',  color:'#0F4C81' },
+  { key:'gpay',    name:'Google Pay', Logo: GooglePayLogo },
+  { key:'phonepe', name:'PhonePe',    Logo: PhonePeLogo },
+  { key:'paytm',   name:'Paytm',      Logo: PaytmLogo },
+  { key:'bhim',    name:'BHIM',       Logo: BhimLogo },
+  { key:'cred',    name:'CRED',       Logo: CredLogo },
+  { key:'jio',     name:'JioPay',     Logo: JioPayLogo },
 ];
 
 const planLabel = { monthly:'1 Month', quarterly:'3 Months', premium:'1 Year' };
@@ -121,19 +180,20 @@ const UpiPaymentModal = ({ amount, type, subscriptionPlan, bookingId, programId,
           {/* ── STEP: initiate ────────────────────────────────────── */}
           {step === 'initiate' && (
             <>
-              <p style={{ color:'var(--t2)', fontSize:13, lineHeight:1.6, marginBottom:18 }}>
+              <p style={{ color:'var(--t2)', fontSize:13, lineHeight:1.6, marginBottom:14 }}>
                 Scan the QR or open your UPI app. Once paid, enter the 12-digit UTR to confirm instantly.
               </p>
-              <div style={{ display:'flex', flexWrap:'wrap', gap:6, marginBottom:20 }}>
-                {UPI_APPS.map(a => (
-                  <span key={a.key} style={{ display:'inline-flex', alignItems:'center', gap:5,
-                    padding:'4px 10px', background:'var(--s2)', border:'1px solid var(--border)',
-                    borderRadius:'var(--r-sm)', fontSize:12, color:'var(--t2)' }}>
-                    <span style={{ width:16, height:16, borderRadius:4, background:a.color,
-                      display:'inline-flex', alignItems:'center', justifyContent:'center',
-                      fontSize:9, fontWeight:700, color:'#fff', flexShrink:0 }}>{a.icon}</span>
-                    {a.name}
-                  </span>
+              {/* App logo pills */}
+              <div style={{ display:'flex', flexWrap:'wrap', gap:8, marginBottom:20 }}>
+                {UPI_APPS.map(({ key, name, Logo }) => (
+                  <div key={key} style={{ display:'inline-flex', alignItems:'center', gap:7,
+                    padding:'5px 10px', background:'var(--s2)', border:'1px solid var(--border)',
+                    borderRadius:'var(--r-sm)' }}>
+                    <div style={{ width:22, height:22, flexShrink:0 }}>
+                      <Logo/>
+                    </div>
+                    <span style={{ fontSize:12, color:'var(--t2)', fontWeight:500 }}>{name}</span>
+                  </div>
                 ))}
               </div>
               <button className="btn btn-primary btn-full" onClick={initiate} disabled={loading}>
@@ -182,20 +242,20 @@ const UpiPaymentModal = ({ amount, type, subscriptionPlan, bookingId, programId,
                 }}>Copy</button>
               </div>
 
-              {/* App deep links */}
-              <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:6, marginBottom:16 }}>
-                {UPI_APPS.map(a => (
-                  <a key={a.key} href={payment.appLinks?.[a.key] || payment.upiLink}
-                    style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:4,
-                      padding:'10px 4px', background:'var(--s2)', border:'1px solid var(--border)',
+              {/* App deep links with logos */}
+              <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:8, marginBottom:16 }}>
+                {UPI_APPS.map(({ key, name, Logo }) => (
+                  <a key={key} href={payment.appLinks?.[key] || payment.upiLink}
+                    style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:5,
+                      padding:'12px 6px', background:'var(--s2)', border:'1px solid var(--border)',
                       borderRadius:'var(--r-md)', textDecoration:'none', color:'var(--t2)',
-                      fontSize:11, transition:'border-color .12s, background .12s' }}
+                      fontSize:11, transition:'border-color .12s, background .12s', fontWeight:500 }}
                     onMouseEnter={e => { e.currentTarget.style.borderColor='var(--lime)'; e.currentTarget.style.background='var(--s3)'; }}
                     onMouseLeave={e => { e.currentTarget.style.borderColor='var(--border)'; e.currentTarget.style.background='var(--s2)'; }}>
-                    <span style={{ width:24, height:24, borderRadius:6, background:a.color,
-                      display:'flex', alignItems:'center', justifyContent:'center',
-                      fontSize:12, fontWeight:800, color:'#fff' }}>{a.icon}</span>
-                    {a.name}
+                    <div style={{ width:32, height:32, borderRadius:8, overflow:'hidden', flexShrink:0 }}>
+                      <Logo/>
+                    </div>
+                    <span style={{ textAlign:'center', lineHeight:1.2 }}>{name}</span>
                   </a>
                 ))}
               </div>

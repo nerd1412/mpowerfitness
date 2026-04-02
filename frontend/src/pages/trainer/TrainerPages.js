@@ -3,6 +3,7 @@ import { toast } from 'react-hot-toast';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import api from '../../utils/api';
 import useAuthStore from '../../store/authStore';
+import VideoCall from '../../components/shared/VideoCall';
 
 const PH = ({ title, hl, sub, color='var(--orange)', action }) => (
   <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:24, flexWrap:'wrap', gap:12 }}>
@@ -60,40 +61,144 @@ export const TrainerClients = () => {
 };
 
 /* ── SCHEDULE ── */
-const DAYS=['monday','tuesday','wednesday','thursday','friday','saturday','sunday'];
+const ALL_DAYS = ['monday','tuesday','wednesday','thursday','friday','saturday','sunday'];
+// JS getDay() → day name mapping (0=Sunday)
+const JS_DAY_MAP = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
+
+/**
+ * Returns the next upcoming Date object for a given day name.
+ * Always returns a future date (never today).
+ */
+const nextOccurrence = (dayName) => {
+  const target = JS_DAY_MAP.indexOf(dayName);
+  const now = new Date(); now.setHours(0,0,0,0);
+  let diff = target - now.getDay();
+  if (diff <= 0) diff += 7; // always future
+  return new Date(now.getTime() + diff * 86400000);
+};
+
 export const TrainerSchedule = () => {
-  const [avail,setAvail]=useState(DAYS.map(d=>({day:d,slots:[]})));
-  const [saving,setSaving]=useState(false);
-  const [loading,setLoading]=useState(true);
-  useEffect(()=>{ api.get('/auth/me').then(({data})=>{ if(data.user?.availability?.length) setAvail(DAYS.map(d=>data.user.availability.find(a=>a.day===d)||{day:d,slots:[]})); }).catch(()=>{}).finally(()=>setLoading(false)); },[]);
-  const addSlot=di=>{const a=[...avail];a[di]={...a[di],slots:[...(a[di].slots||[]),{startTime:'09:00',endTime:'10:00'}]};setAvail(a);};
-  const removeSlot=(di,si)=>{const a=[...avail];a[di]={...a[di],slots:a[di].slots.filter((_,j)=>j!==si)};setAvail(a);};
-  const updateSlot=(di,si,f,v)=>{const a=[...avail];a[di]={...a[di],slots:a[di].slots.map((s,j)=>j===si?{...s,[f]:v}:s)};setAvail(a);};
-  const save=async()=>{setSaving(true);try{await api.put('/trainers/availability',{availability:avail});toast.success('Schedule saved!');}catch{toast.error('Failed');}setSaving(false);};
-  if(loading) return <div style={{display:'flex',justifyContent:'center',padding:60}}><div className="spinner spinner-lg"/></div>;
+  const [avail, setAvail] = useState(ALL_DAYS.map(d => ({ day: d, slots: [] })));
+  const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    api.get('/auth/me')
+      .then(({ data }) => {
+        if (data.user?.availability?.length) {
+          setAvail(ALL_DAYS.map(d => data.user.availability.find(a => a.day === d) || { day: d, slots: [] }));
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  const addSlot = di => {
+    const a = [...avail];
+    a[di] = { ...a[di], slots: [...(a[di].slots || []), { startTime:'09:00', endTime:'10:00' }] };
+    setAvail(a);
+  };
+  const removeSlot = (di, si) => {
+    const a = [...avail];
+    a[di] = { ...a[di], slots: a[di].slots.filter((_, j) => j !== si) };
+    setAvail(a);
+  };
+  const updateSlot = (di, si, field, val) => {
+    const a = [...avail];
+    a[di] = { ...a[di], slots: a[di].slots.map((s, j) => j === si ? { ...s, [field]: val } : s) };
+    setAvail(a);
+  };
+  const save = async () => {
+    setSaving(true);
+    try {
+      await api.put('/trainers/availability', { availability: avail });
+      toast.success('Schedule saved!');
+    } catch { toast.error('Failed to save schedule'); }
+    setSaving(false);
+  };
+
+  // Sort days by next occurrence so trainer always sees upcoming dates first
+  const sortedAvail = [...avail].sort((a, b) => nextOccurrence(a.day) - nextOccurrence(b.day));
+
+  if (loading) return <div style={{ display:'flex', justifyContent:'center', padding:60 }}><div className="spinner spinner-lg"/></div>;
+
   return (
-    <div style={{maxWidth:760}}>
-      <PH title="My" hl="Schedule" sub="Set available time slots for client bookings" action={<button className="btn btn-orange" onClick={save} disabled={saving}>{saving?'Saving…':'Save Schedule'}</button>}/>
-      <div style={{display:'flex',flexDirection:'column',gap:10}}>
-        {avail.map((day,di)=>(
-          <div key={day.day} className="card">
-            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:day.slots.length?12:0}}>
-              <span style={{fontWeight:600,fontSize:14,textTransform:'capitalize',minWidth:100}}>{day.day}</span>
-              <button className="btn btn-ghost btn-sm" onClick={()=>addSlot(di)}>+ Add slot</button>
+    <div style={{ maxWidth:760 }}>
+      <PH
+        title="My" hl="Schedule"
+        sub="Set your weekly recurring time slots — applied to all future dates of each day"
+        action={<button className="btn btn-orange" onClick={save} disabled={saving}>{saving ? 'Saving…' : 'Save Schedule'}</button>}
+      />
+
+      {/* Upcoming preview strip */}
+      <div style={{
+        display:'flex', gap:7, overflowX:'auto', paddingBottom:6,
+        marginBottom:18, scrollbarWidth:'none',
+      }}>
+        {sortedAvail.map(day => {
+          const next = nextOccurrence(day.day);
+          const hasSlots = day.slots.length > 0;
+          return (
+            <div key={day.day} style={{
+              flexShrink:0, minWidth:58, padding:'8px 6px',
+              borderRadius:'var(--r-md)', textAlign:'center',
+              background: hasSlots ? 'rgba(255,95,31,.08)' : 'var(--s2)',
+              border: `1.5px solid ${hasSlots ? 'rgba(255,95,31,.3)' : 'var(--border)'}`,
+            }}>
+              <div style={{ fontSize:9, fontWeight:700, textTransform:'uppercase', letterSpacing:'.05em', color: hasSlots ? 'var(--orange)' : 'var(--t3)', marginBottom:2 }}>
+                {next.toLocaleDateString('en-IN', { weekday:'short' })}
+              </div>
+              <div style={{ fontSize:16, fontWeight:800, color: hasSlots ? 'var(--t1)' : 'var(--t3)', lineHeight:1.1 }}>
+                {next.getDate()}
+              </div>
+              <div style={{ fontSize:8, color:'var(--t3)', marginTop:2 }}>
+                {next.toLocaleDateString('en-IN', { month:'short' })}
+              </div>
+              <div style={{ fontSize:9, color: hasSlots ? 'var(--success)' : 'var(--t3)', marginTop:3, fontWeight:600 }}>
+                {hasSlots ? `${day.slots.length} slot${day.slots.length !== 1 ? 's' : ''}` : 'off'}
+              </div>
             </div>
-            {day.slots.length===0&&<div style={{fontSize:13,color:'var(--t3)'}}>No slots — day off</div>}
-            <div style={{display:'flex',flexDirection:'column',gap:8}}>
-              {day.slots.map((slot,si)=>(
-                <div key={si} className="time-slot-row" style={{display:'flex',gap:10,alignItems:'center',flexWrap:'wrap'}}>
-                  <input type="time" className="form-input" style={{width:130}} value={slot.startTime} onChange={e=>updateSlot(di,si,'startTime',e.target.value)}/>
-                  <span style={{color:'var(--t3)',fontSize:13}}>to</span>
-                  <input type="time" className="form-input" style={{width:130}} value={slot.endTime} onChange={e=>updateSlot(di,si,'endTime',e.target.value)}/>
-                  <button className="btn btn-danger btn-sm" onClick={()=>removeSlot(di,si)}>✕</button>
+          );
+        })}
+      </div>
+
+      <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+        {sortedAvail.map((day) => {
+          const di = avail.findIndex(a => a.day === day.day);
+          const next = nextOccurrence(day.day);
+          const nextLabel = next.toLocaleDateString('en-IN', { weekday:'long', month:'short', day:'numeric' });
+          return (
+            <div key={day.day} className="card">
+              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom: day.slots.length ? 12 : 0, flexWrap:'wrap', gap:8 }}>
+                <div>
+                  <span style={{ fontWeight:700, fontSize:14, textTransform:'capitalize' }}>{day.day}</span>
+                  <span style={{ fontSize:12, color:'var(--t3)', marginLeft:10 }}>Next: {nextLabel}</span>
+                  {day.slots.length > 0 && (
+                    <span className="badge badge-success" style={{ marginLeft:8, fontSize:9 }}>
+                      {day.slots.length} slot{day.slots.length !== 1 ? 's' : ''}
+                    </span>
+                  )}
                 </div>
-              ))}
+                <button className="btn btn-ghost btn-sm" onClick={() => addSlot(di)}>+ Add slot</button>
+              </div>
+              {day.slots.length === 0 && (
+                <div style={{ fontSize:13, color:'var(--t3)', fontStyle:'italic' }}>No slots set — marked as day off</div>
+              )}
+              <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+                {day.slots.map((slot, si) => (
+                  <div key={si} style={{ display:'flex', gap:10, alignItems:'center', flexWrap:'wrap' }}>
+                    <input type="time" className="form-input" style={{ width:130 }} value={slot.startTime}
+                      onChange={e => updateSlot(di, si, 'startTime', e.target.value)}/>
+                    <span style={{ color:'var(--t3)', fontSize:13 }}>to</span>
+                    <input type="time" className="form-input" style={{ width:130 }} value={slot.endTime}
+                      onChange={e => updateSlot(di, si, 'endTime', e.target.value)}/>
+                    <button className="btn btn-danger btn-sm" onClick={() => removeSlot(di, si)}>✕ Remove</button>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
@@ -101,9 +206,12 @@ export const TrainerSchedule = () => {
 
 /* ── BOOKINGS ── */
 export const TrainerBookings = () => {
+  const { user } = useAuthStore();
   const [bookings,setBookings]=useState([]);
   const [filter,setFilter]=useState('all');
   const [loading,setLoading]=useState(true);
+  const [activeCall, setActiveCall] = useState(null); // { bookingId, displayName }
+
   const load=()=>{setLoading(true);api.get('/bookings/trainer-schedule').then(({data})=>{if(data.success)setBookings(data.bookings);}).catch(()=>{}).finally(()=>setLoading(false));};
   useEffect(load,[]);
   const updateStatus=async(id,status)=>{try{await api.patch(`/bookings/${id}/status`,{status});toast.success(`Booking ${status}`);setBookings(b=>b.map(x=>(x.id||x._id)===id?{...x,status}:x));}catch(e){toast.error(e.response?.data?.message||'Failed');}};
@@ -126,7 +234,10 @@ export const TrainerBookings = () => {
                   <div>
                     <div style={{fontWeight:700,fontSize:14}}>{b.user?.name}</div>
                     <div style={{fontSize:12,color:'var(--t3)'}}>{b.user?.email}</div>
-                    <div style={{fontSize:13,color:'var(--t2)',marginTop:2}}>📅 {new Date(b.sessionDate).toLocaleDateString('en-IN',{weekday:'short',month:'short',day:'numeric'})} · ⏰ {b.startTime}</div>
+                    <div style={{fontSize:13,color:'var(--t2)',marginTop:2}}>
+                      📅 {new Date(b.sessionDate).toLocaleDateString('en-IN',{weekday:'short',month:'short',day:'numeric'})} · ⏰ {b.startTime}
+                      {b.sessionType && <span style={{marginLeft:8,color:'var(--t3)',fontSize:11}}>· {b.sessionType.replace(/_/g,' ')}</span>}
+                    </div>
                   </div>
                 </div>
                 <div style={{display:'flex',alignItems:'center',gap:8}}><SB s={b.status}/><span style={{fontWeight:700,color:'var(--success)',fontSize:14}}>₹{b.amount}</span></div>
@@ -139,13 +250,27 @@ export const TrainerBookings = () => {
                 </div>
               )}
               {b.status==='confirmed'&&(
-                <div style={{marginTop:12,paddingTop:12,borderTop:'1px solid var(--border)',display:'flex',gap:8}}>
+                <div style={{marginTop:12,paddingTop:12,borderTop:'1px solid var(--border)',display:'flex',gap:8,flexWrap:'wrap'}}>
+                  {b.sessionType === 'online_video' && (
+                    <button className="btn btn-sm"
+                      style={{ background:'rgba(200,241,53,0.12)', border:'1.5px solid rgba(200,241,53,0.3)', color:'var(--lime)', fontWeight:700, padding:'6px 14px' }}
+                      onClick={() => setActiveCall({ bookingId: b.id || b._id, displayName: user?.name })}>
+                      📹 Join Video Call
+                    </button>
+                  )}
                   <button className="btn btn-ghost btn-sm" onClick={()=>updateStatus(b.id||b._id,'completed')}>Mark Complete</button>
                   <button className="btn btn-danger btn-sm" onClick={()=>updateStatus(b.id||b._id,'cancelled')}>Cancel</button>
                 </div>
               )}
             </div>
           ))}
+          {activeCall && (
+            <VideoCall
+              bookingId={activeCall.bookingId}
+              displayName={activeCall.displayName}
+              onClose={() => setActiveCall(null)}
+            />
+          )}
           {filtered.length===0&&<div className="card" style={{textAlign:'center',padding:60}}><div style={{fontSize:40,marginBottom:12}}>📅</div><p style={{color:'var(--t3)',fontSize:14}}>No {filter!=='all'?filter:''} bookings</p></div>}
         </div>
       )}

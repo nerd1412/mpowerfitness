@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import useAuthStore from '../../store/authStore';
 import { useTrainerSchedule, useMyClients } from '../../hooks/useQueries';
+import VideoCall from '../../components/shared/VideoCall';
 
 const Stat = ({ icon, label, value, color='var(--orange)' }) => (
   <div className="stat-card">
@@ -28,6 +29,7 @@ export default function TrainerDashboard() {
   const { user } = useAuthStore();
   const { data: bookings = [], isLoading: loadingBookings } = useTrainerSchedule();
   const { data: clients = [], isLoading: loadingClients } = useMyClients();
+  const [activeCall, setActiveCall] = React.useState(null); // { bookingId, displayName }
 
   const completed   = bookings.filter(b => b.status === 'completed');
   const pending     = bookings.filter(b => b.status === 'pending');
@@ -165,12 +167,30 @@ export default function TrainerDashboard() {
                 <div className="avatar-placeholder" style={{ width:38, height:38, fontSize:15, background:'rgba(255,95,31,.12)', color:'var(--orange)', flexShrink:0 }}>{b.user?.name?.[0]}</div>
                 <div style={{ flex:1, minWidth:0 }}>
                   <div style={{ fontWeight:600, fontSize:13 }}>{b.user?.name}</div>
-                  <div style={{ fontSize:12, color:'var(--t3)' }}>{new Date(b.sessionDate).toLocaleDateString('en-IN',{weekday:'short',month:'short',day:'numeric'})} · {b.startTime} · {b.sessionType==='online'?'🖥 Online':'📍 In Person'}</div>
+                  <div style={{ fontSize:12, color:'var(--t3)' }}>
+                    {new Date(b.sessionDate).toLocaleDateString('en-IN',{weekday:'short',month:'short',day:'numeric'})} · {b.startTime} · {b.sessionType?.replace(/_/g,' ')}
+                  </div>
                 </div>
-                <SB s={b.status}/>
+                <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                  {b.sessionType === 'online_video' && b.status === 'confirmed' && (
+                    <button className="btn btn-sm btn-ghost" 
+                      style={{ color:'var(--lime)', border:'1px solid rgba(200,241,53,0.3)', padding:'4px 8px', fontSize:11 }}
+                      onClick={() => setActiveCall({ bookingId: b.id, displayName: user?.name })}>
+                      📹 Join
+                    </button>
+                  )}
+                  <SB s={b.status}/>
+                </div>
               </div>
             ))}
           </div>
+          {activeCall && (
+            <VideoCall
+              bookingId={activeCall.bookingId}
+              displayName={activeCall.displayName}
+              onClose={() => setActiveCall(null)}
+            />
+          )}
         </div>
       )}
     </div>
