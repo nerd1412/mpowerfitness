@@ -148,7 +148,7 @@ const Onboarding = () => {
       <div style={{ width:'100%', maxWidth:600, animation:'slideUp 0.45s ease forwards' }}>
         {/* Header */}
         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:28 }}>
-          <LogoFull height={36} />
+          <LogoFull height={50} />
           <span style={{ fontSize:13, color:'var(--text-muted)' }}>Step {step + 1} of {STEPS.length}</span>
         </div>
 

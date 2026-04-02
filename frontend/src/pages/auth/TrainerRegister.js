@@ -40,7 +40,7 @@ const TrainerRegister = () => {
 
       <div style={{ width:'100%', maxWidth:500, animation:'slideUp 0.45s ease forwards' }}>
         <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:12, marginBottom:32 }}>
-          <LogoFull height={38} />
+          <LogoFull height={55} />
           <span style={{ background:'rgba(255,95,31,0.12)', color:'var(--electric-orange)', border:'1px solid rgba(255,95,31,0.25)', borderRadius:6, padding:'3px 10px', fontSize:11, fontWeight:600, letterSpacing:'0.08em', textTransform:'uppercase' }}>Trainer Application</span>
         </div>
 

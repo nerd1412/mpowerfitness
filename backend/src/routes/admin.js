@@ -299,6 +299,33 @@ router.delete('/workouts/:id', ...adminAuth, async (req, res) => {
   } catch (err) { res.status(500).json({ success: false, message: err.message }); }
 });
 
+router.patch('/workouts/:id/assign', ...adminAuth, async (req, res) => {
+  try {
+    const { userId, remove } = req.body;
+    if (!userId) return res.status(400).json({ success: false, message: 'userId required' });
+    const workout = await Workout.findByPk(req.params.id);
+    if (!workout) return res.status(404).json({ success: false, message: 'Workout not found' });
+    const current = Array.isArray(workout.assignedTo) ? workout.assignedTo : [];
+    workout.assignedTo = remove
+      ? current.filter(id => id !== userId)
+      : current.includes(userId) ? current : [...current, userId];
+    await workout.save();
+    if (!remove) {
+      const user = await User.findByPk(userId);
+      if (user) {
+        const notif = await Notification.create({
+          recipientId: userId, recipientModel: 'User',
+          title: 'New Workout Plan Assigned',
+          message: `A workout plan "${workout.title}" has been assigned to you by your trainer.`,
+          type: 'system', actionUrl: '/user/workouts',
+        });
+        emitNotification(req.app.get('io'), 'User', userId, notif.toJSON());
+      }
+    }
+    res.json({ success: true, message: remove ? 'Assignment removed' : 'Workout assigned', assignedTo: workout.assignedTo });
+  } catch (err) { res.status(500).json({ success: false, message: err.message }); }
+});
+
 // ── NUTRITION MANAGEMENT ───────────────────────────────────────
 router.get('/nutrition', ...adminAuth, async (req, res) => {
   try {
@@ -326,6 +353,34 @@ router.delete('/nutrition/:id', ...adminAuth, async (req, res) => {
   try {
     await NutritionPlan.destroy({ where: { id: req.params.id } });
     res.json({ success: true, message: 'Plan deleted' });
+  } catch (err) { res.status(500).json({ success: false, message: err.message }); }
+});
+
+router.patch('/nutrition/:id/assign', ...adminAuth, async (req, res) => {
+  try {
+    const { userId, remove } = req.body;
+    if (!userId) return res.status(400).json({ success: false, message: 'userId required' });
+    const plan = await NutritionPlan.findByPk(req.params.id);
+    if (!plan) return res.status(404).json({ success: false, message: 'Plan not found' });
+    const current = Array.isArray(plan.assignedTo) ? plan.assignedTo : [];
+    plan.assignedTo = remove
+      ? current.filter(id => id !== userId)
+      : current.includes(userId) ? current : [...current, userId];
+    await plan.save();
+    // Notify user
+    if (!remove) {
+      const user = await User.findByPk(userId);
+      if (user) {
+        const notif = await Notification.create({
+          recipientId: userId, recipientModel: 'User',
+          title: 'New Nutrition Plan Assigned',
+          message: `A personalised nutrition plan "${plan.title}" has been assigned to you.`,
+          type: 'system', actionUrl: '/user/nutrition',
+        });
+        emitNotification(req.app.get('io'), 'User', userId, notif.toJSON());
+      }
+    }
+    res.json({ success: true, message: remove ? 'Assignment removed' : 'Plan assigned', assignedTo: plan.assignedTo });
   } catch (err) { res.status(500).json({ success: false, message: err.message }); }
 });
 

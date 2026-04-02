@@ -40,27 +40,27 @@ const SidebarShell = ({ collapsed, onToggle, accent, badge, badgeClass, userSub,
 
       {/* Logo row */}
       <div style={{
-        padding: collapsed ? '14px 0' : '14px 14px',
+        padding: collapsed ? '12px 0' : '10px 14px',
         borderBottom:'1px solid var(--border)',
         display:'flex', flexDirection:'column', gap:5,
-        flexShrink:0, height:64,
+        flexShrink:0, minHeight:72,
         justifyContent:'center',
       }}>
         {collapsed ? (
           /* Collapsed: show icon M */
           <div style={{ display:'flex', justifyContent:'center' }}>
             <div style={{
-              width:34, height:34, borderRadius:8,
+              width:38, height:38, borderRadius:8,
               background:'#07080A',
               border:`1px solid rgba(${accent},.2)`,
               display:'flex', alignItems:'center', justifyContent:'center',
             }}>
-              <span style={{ fontFamily:"'Arial Black',sans-serif", fontWeight:900, fontSize:15, color:'var(--lime)', lineHeight:1 }}>M</span>
+              <span style={{ fontFamily:"'Arial Black',sans-serif", fontWeight:900, fontSize:17, color:'var(--lime)', lineHeight:1 }}>M</span>
             </div>
           </div>
         ) : (
           <>
-            <LogoFull height={34} linkTo={null}/>
+            <LogoFull height={50} linkTo={null}/>
             {badge && (
               <span className={`badge ${badgeClass}`} style={{ alignSelf:'flex-start', fontSize:9, letterSpacing:'.1em' }}>
                 {badge}

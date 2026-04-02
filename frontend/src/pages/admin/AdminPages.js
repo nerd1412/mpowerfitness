@@ -14,7 +14,7 @@ const PH = ({ title, hl, sub, color='var(--info)', action }) => (
   </div>
 );
 
-const CRUDTable = ({ cols, rows, onEdit, onDelete, emptyText='No records found' }) => (
+const CRUDTable = ({ cols, rows, onEdit, onDelete, onAssign, emptyText='No records found' }) => (
   <div className="table-wrapper">
     <table>
       <thead><tr>{cols.map(c=><th key={c}>{c}</th>)}<th>Actions</th></tr></thead>
@@ -27,6 +27,7 @@ const CRUDTable = ({ cols, rows, onEdit, onDelete, emptyText='No records found' 
                 <div style={{ display:'flex', gap:6 }}>
                   <button className="btn btn-ghost btn-sm" onClick={()=>onEdit(row.data)}>Edit</button>
                   <button className="btn btn-danger btn-sm" onClick={()=>onDelete(row.data.id||row.data._id)}>Delete</button>
+                  {onAssign && <button className="btn btn-primary btn-sm" onClick={()=>onAssign(row.data)}>Assign</button>}
                 </div>
               </td>
             </tr>
@@ -160,20 +161,26 @@ export const AdminAnalytics = () => {
 ════════════════════════════════════════════════════════════════ */
 export const AdminWorkouts = () => {
   const [workouts,setWorkouts]=useState([]);
+  const [users,setUsers]=useState([]);
   const [loading,setLoading]=useState(true);
   const [showForm,setShowForm]=useState(false);
   const [editingId,setEditingId]=useState(null);
   const [form,setForm]=useState({ title:'', description:'', category:'strength', difficulty:'intermediate', duration:30, caloriesBurn:250, isPublic:true, isFeatured:false });
   const [saving,setSaving]=useState(false);
-  const load=()=>{ setLoading(true); api.get('/admin/workouts').then(({data})=>{if(data.success)setWorkouts(data.workouts);}).catch(()=>{}).finally(()=>setLoading(false)); };
+  const [assigning,setAssigning]=useState(null); // workout being assigned
+  const [assignUserId,setAssignUserId]=useState('');
+  const [assigning2,setAssigning2]=useState(false);
+  const load=()=>{ setLoading(true); Promise.all([api.get('/admin/workouts'),api.get('/admin/users')]).then(([wr,ur])=>{ if(wr.data.success)setWorkouts(wr.data.workouts); if(ur.data.success)setUsers(ur.data.users); }).catch(()=>{}).finally(()=>setLoading(false)); };
   useEffect(load,[]);
-  const openCreate=()=>{ setForm({title:'',description:'',category:'strength',difficulty:'intermediate',duration:30,caloriesBurn:250,isPublic:true,isFeatured:false}); setEditingId(null); setShowForm(true); };
-  const openEdit=w=>{ setForm({title:w.title,description:w.description||'',category:w.category,difficulty:w.difficulty,duration:w.duration,caloriesBurn:w.caloriesBurn||0,isPublic:w.isPublic,isFeatured:w.isFeatured}); setEditingId(w.id||w._id); setShowForm(true); };
+  const openCreate=()=>{ setForm({title:'',description:'',category:'strength',difficulty:'intermediate',duration:30,caloriesBurn:250,isPublic:true,isFeatured:false}); setEditingId(null); setShowForm(true); setAssigning(null); };
+  const openEdit=w=>{ setForm({title:w.title,description:w.description||'',category:w.category,difficulty:w.difficulty,duration:w.duration,caloriesBurn:w.caloriesBurn||0,isPublic:w.isPublic,isFeatured:w.isFeatured}); setEditingId(w.id||w._id); setShowForm(true); setAssigning(null); };
   const save=async()=>{ if(!form.title)return toast.error('Title required'); setSaving(true); try{ if(editingId){await api.put(`/admin/workouts/${editingId}`,form);toast.success('Updated');}else{await api.post('/admin/workouts',form);toast.success('Created');} setShowForm(false); load(); }catch(e){toast.error(e.response?.data?.message||'Failed');} setSaving(false); };
   const del=async id=>{ if(!window.confirm('Delete this workout?'))return; try{await api.delete(`/admin/workouts/${id}`);toast.success('Deleted');load();}catch{toast.error('Failed');} };
+  const openAssign=w=>{ setAssigning(w); setAssignUserId(''); setShowForm(false); };
+  const doAssign=async()=>{ if(!assignUserId)return toast.error('Select a user'); setAssigning2(true); try{ await api.patch(`/admin/workouts/${assigning.id||assigning._id}/assign`,{userId:assignUserId}); toast.success('Workout assigned!'); setAssigning(null); }catch(e){toast.error(e.response?.data?.message||'Failed');} setAssigning2(false); };
   return (
     <div>
-      <PH title="Workout" hl="Management" sub="Create and manage all platform workouts" action={<button className="btn btn-primary" onClick={openCreate}>+ New Workout</button>}/>
+      <PH title="Workout" hl="Management" sub="Create, manage and assign workout plans" action={<button className="btn btn-primary" onClick={openCreate}>+ New Workout</button>}/>
       {showForm&&(
         <div className="card" style={{ marginBottom:18, borderColor:'var(--info)' }}>
           <h3 style={{ fontWeight:700, fontSize:15, marginBottom:16 }}>{editingId?'Edit':'New'} Workout</h3>
@@ -192,18 +199,36 @@ export const AdminWorkouts = () => {
           <div style={{ display:'flex', gap:8, marginTop:16 }}><button className="btn btn-primary flex-1" onClick={save} disabled={saving}>{saving?'Saving…':editingId?'Update':'Create'}</button><button className="btn btn-ghost" onClick={()=>setShowForm(false)}>Cancel</button></div>
         </div>
       )}
+      {assigning&&(
+        <div className="card" style={{ marginBottom:18, borderColor:'var(--lime)' }}>
+          <h3 style={{ fontWeight:700, fontSize:15, marginBottom:4 }}>Assign Workout to User</h3>
+          <p style={{ fontSize:13, color:'var(--t2)', marginBottom:14 }}>Plan: <strong>{assigning.title}</strong></p>
+          <div style={{ display:'flex', gap:10, alignItems:'flex-end', flexWrap:'wrap' }}>
+            <div className="form-group" style={{ flex:1, minWidth:200, marginBottom:0 }}>
+              <label className="form-label">Select User</label>
+              <select className="form-input" value={assignUserId} onChange={e=>setAssignUserId(e.target.value)}>
+                <option value="">— Choose user —</option>
+                {users.map(u=><option key={u.id||u._id} value={u.id||u._id}>{u.name} ({u.email})</option>)}
+              </select>
+            </div>
+            <button className="btn btn-primary" onClick={doAssign} disabled={assigning2||!assignUserId}>{assigning2?'Assigning…':'Assign'}</button>
+            <button className="btn btn-ghost" onClick={()=>setAssigning(null)}>Cancel</button>
+          </div>
+        </div>
+      )}
       {loading?<div style={{ display:'flex',justifyContent:'center',padding:40 }}><div className="spinner spinner-lg"/></div>:(
         <CRUDTable
-          cols={['Title','Category','Difficulty','Duration','Calories','Featured']}
+          cols={['Title','Category','Difficulty','Duration','Calories','Public','Featured']}
           rows={workouts.map(w=>({ id:w.id||w._id, data:w, cells:[
             <strong>{w.title}</strong>,
             <span className="badge badge-neutral" style={{ textTransform:'capitalize' }}>{w.category}</span>,
             <span style={{ textTransform:'capitalize', color:'var(--t2)', fontSize:13 }}>{w.difficulty}</span>,
             <span style={{ color:'var(--t2)', fontSize:13 }}>{w.duration} min</span>,
             <span style={{ color:'var(--t2)', fontSize:13 }}>{w.caloriesBurn||'—'}</span>,
+            <span className={`badge ${w.isPublic?'badge-success':'badge-neutral'}`}>{w.isPublic?'Yes':'No'}</span>,
             w.isFeatured?<span className="badge badge-success">⭐ Yes</span>:<span style={{ color:'var(--t3)', fontSize:12 }}>—</span>,
           ]}))}
-          onEdit={openEdit} onDelete={del} emptyText="No workouts yet"/>
+          onEdit={openEdit} onDelete={del} onAssign={openAssign} emptyText="No workouts yet"/>
       )}
     </div>
   );
@@ -214,20 +239,26 @@ export const AdminWorkouts = () => {
 ════════════════════════════════════════════════════════════════ */
 export const AdminNutrition = () => {
   const [plans,setPlans]=useState([]);
+  const [users,setUsers]=useState([]);
   const [loading,setLoading]=useState(true);
   const [showForm,setShowForm]=useState(false);
   const [editingId,setEditingId]=useState(null);
   const [form,setForm]=useState({ title:'', description:'', goal:'weight_loss', caloriesPerDay:2000, proteinGrams:150, carbsGrams:200, fatGrams:65, isPublic:true });
   const [saving,setSaving]=useState(false);
-  const load=()=>{ setLoading(true); api.get('/admin/nutrition').then(({data})=>{if(data.success)setPlans(data.plans);}).catch(()=>{}).finally(()=>setLoading(false)); };
+  const [assigning,setAssigning]=useState(null); // plan being assigned
+  const [assignUserId,setAssignUserId]=useState('');
+  const [assigning2,setAssigning2]=useState(false);
+  const load=()=>{ setLoading(true); Promise.all([api.get('/admin/nutrition'),api.get('/admin/users')]).then(([pr,ur])=>{ if(pr.data.success)setPlans(pr.data.plans); if(ur.data.success)setUsers(ur.data.users); }).catch(()=>{}).finally(()=>setLoading(false)); };
   useEffect(load,[]);
-  const openCreate=()=>{ setForm({title:'',description:'',goal:'weight_loss',caloriesPerDay:2000,proteinGrams:150,carbsGrams:200,fatGrams:65,isPublic:true}); setEditingId(null); setShowForm(true); };
-  const openEdit=p=>{ setForm({title:p.title,description:p.description||'',goal:p.goal||'weight_loss',caloriesPerDay:p.caloriesPerDay,proteinGrams:p.proteinGrams,carbsGrams:p.carbsGrams,fatGrams:p.fatGrams,isPublic:p.isPublic}); setEditingId(p.id||p._id); setShowForm(true); };
+  const openCreate=()=>{ setForm({title:'',description:'',goal:'weight_loss',caloriesPerDay:2000,proteinGrams:150,carbsGrams:200,fatGrams:65,isPublic:true}); setEditingId(null); setShowForm(true); setAssigning(null); };
+  const openEdit=p=>{ setForm({title:p.title,description:p.description||'',goal:p.goal||'weight_loss',caloriesPerDay:p.caloriesPerDay,proteinGrams:p.proteinGrams,carbsGrams:p.carbsGrams,fatGrams:p.fatGrams,isPublic:p.isPublic}); setEditingId(p.id||p._id); setShowForm(true); setAssigning(null); };
   const save=async()=>{ if(!form.title)return toast.error('Title required'); setSaving(true); try{ if(editingId){await api.put(`/admin/nutrition/${editingId}`,form);toast.success('Updated');}else{await api.post('/admin/nutrition',form);toast.success('Created');} setShowForm(false); load(); }catch(e){toast.error(e.response?.data?.message||'Failed');} setSaving(false); };
   const del=async id=>{ if(!window.confirm('Delete this plan?'))return; try{await api.delete(`/admin/nutrition/${id}`);toast.success('Deleted');load();}catch{toast.error('Failed');} };
+  const openAssign=p=>{ setAssigning(p); setAssignUserId(''); setShowForm(false); };
+  const doAssign=async()=>{ if(!assignUserId)return toast.error('Select a user'); setAssigning2(true); try{ await api.patch(`/admin/nutrition/${assigning.id||assigning._id}/assign`,{userId:assignUserId}); toast.success('Plan assigned!'); setAssigning(null); }catch(e){toast.error(e.response?.data?.message||'Failed');} setAssigning2(false); };
   return (
     <div>
-      <PH title="Nutrition" hl="Management" sub="Manage platform nutrition plans" action={<button className="btn btn-primary" onClick={openCreate}>+ New Plan</button>}/>
+      <PH title="Nutrition" hl="Management" sub="Manage and assign nutrition plans to users" action={<button className="btn btn-primary" onClick={openCreate}>+ New Plan</button>}/>
       {showForm&&(
         <div className="card" style={{ marginBottom:18, borderColor:'var(--success)' }}>
           <h3 style={{ fontWeight:700, fontSize:15, marginBottom:16 }}>{editingId?'Edit':'New'} Nutrition Plan</h3>
@@ -238,14 +269,32 @@ export const AdminNutrition = () => {
             {[['Calories/day','caloriesPerDay'],['Protein (g)','proteinGrams'],['Carbs (g)','carbsGrams'],['Fat (g)','fatGrams']].map(([label,field])=>(
               <div key={field} className="form-group"><label className="form-label">{label}</label><input className="form-input" type="number" value={form[field]} onChange={e=>setForm(f=>({...f,[field]:parseInt(e.target.value)||0}))}/></div>
             ))}
-            <div style={{ display:'flex', alignItems:'center', gap:8 }}><label style={{ display:'flex', alignItems:'center', gap:8, cursor:'pointer', fontSize:14, fontWeight:500 }}><input type="checkbox" checked={form.isPublic} onChange={e=>setForm(f=>({...f,isPublic:e.target.checked}))}/> Public</label></div>
+            <div style={{ display:'flex', alignItems:'center', gap:8 }}><label style={{ display:'flex', alignItems:'center', gap:8, cursor:'pointer', fontSize:14, fontWeight:500 }}><input type="checkbox" checked={form.isPublic} onChange={e=>setForm(f=>({...f,isPublic:e.target.checked}))}/> Public (visible to all users)</label></div>
           </div>
           <div style={{ display:'flex', gap:8, marginTop:16 }}><button className="btn btn-primary flex-1" onClick={save} disabled={saving}>{saving?'Saving…':editingId?'Update':'Create'}</button><button className="btn btn-ghost" onClick={()=>setShowForm(false)}>Cancel</button></div>
         </div>
       )}
+      {assigning&&(
+        <div className="card" style={{ marginBottom:18, borderColor:'var(--lime)' }}>
+          <h3 style={{ fontWeight:700, fontSize:15, marginBottom:4 }}>Assign Plan to User</h3>
+          <p style={{ fontSize:13, color:'var(--t2)', marginBottom:14 }}>Plan: <strong>{assigning.title}</strong> · {assigning.caloriesPerDay} kcal · {(assigning.goal||'').replace(/_/g,' ')}</p>
+          <div style={{ display:'flex', gap:10, alignItems:'flex-end', flexWrap:'wrap' }}>
+            <div className="form-group" style={{ flex:1, minWidth:200, marginBottom:0 }}>
+              <label className="form-label">Select User</label>
+              <select className="form-input" value={assignUserId} onChange={e=>setAssignUserId(e.target.value)}>
+                <option value="">— Choose user —</option>
+                {users.map(u=><option key={u.id||u._id} value={u.id||u._id}>{u.name} ({u.email})</option>)}
+              </select>
+            </div>
+            <button className="btn btn-primary" onClick={doAssign} disabled={assigning2||!assignUserId}>{assigning2?'Assigning…':'Assign'}</button>
+            <button className="btn btn-ghost" onClick={()=>setAssigning(null)}>Cancel</button>
+          </div>
+          <p style={{ fontSize:12, color:'var(--t3)', marginTop:10 }}>User will be notified and the plan will appear in their Nutrition section.</p>
+        </div>
+      )}
       {loading?<div style={{ display:'flex',justifyContent:'center',padding:40 }}><div className="spinner spinner-lg"/></div>:(
         <CRUDTable
-          cols={['Title','Goal','Calories','Protein','Carbs','Fat','Public']}
+          cols={['Title','Goal','Calories','Protein','Carbs','Fat','Public','Assigned']}
           rows={plans.map(p=>({ id:p.id||p._id, data:p, cells:[
             <strong>{p.title}</strong>,
             <span className="badge badge-neutral" style={{ fontSize:11, textTransform:'capitalize' }}>{(p.goal||'').replace(/_/g,' ')}</span>,
@@ -254,8 +303,9 @@ export const AdminNutrition = () => {
             <span style={{ color:'var(--info)', fontSize:13 }}>{p.carbsGrams}g</span>,
             <span style={{ color:'var(--warning)', fontSize:13 }}>{p.fatGrams}g</span>,
             <span className={`badge ${p.isPublic?'badge-success':'badge-neutral'}`}>{p.isPublic?'Yes':'No'}</span>,
+            <span style={{ color:'var(--t2)', fontSize:12 }}>{(p.assignedTo||[]).length} user{(p.assignedTo||[]).length!==1?'s':''}</span>,
           ]}))}
-          onEdit={openEdit} onDelete={del} emptyText="No plans yet"/>
+          onEdit={openEdit} onDelete={del} onAssign={openAssign} emptyText="No plans yet"/>
       )}
     </div>
   );

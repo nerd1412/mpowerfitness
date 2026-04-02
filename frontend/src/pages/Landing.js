@@ -70,10 +70,10 @@ const Landing = () => {
         borderBottom: '1px solid var(--border)',
       }}>
         <div style={{
-          height: 60, display: 'flex', alignItems: 'center',
+          height: 72, display: 'flex', alignItems: 'center',
           padding: '0 clamp(16px, 4vw, 40px)', justifyContent: 'space-between'
         }}>
-          <LogoFull height={44} />
+          <LogoFull height={56} />
 
           {/* Desktop nav links */}
           <div className="flex items-center gap-md landing-nav-links">

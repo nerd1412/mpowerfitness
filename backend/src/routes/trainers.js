@@ -1,6 +1,6 @@
 const express = require('express');
 const { protect, authorize } = require('../middleware/auth');
-const { Trainer, User, Booking } = require('../models/index');
+const { Trainer, User, Booking, NutritionPlan } = require('../models/index');
 const { Op, literal } = require('sequelize');
 
 const router = express.Router();
@@ -80,6 +80,35 @@ router.put('/profile', protect, authorize('trainer'), async (req, res) => {
     await Trainer.update(updates, { where: { id: req.user.id } });
     const trainer = await Trainer.findByPk(req.user.id, { attributes: { exclude: ['password', 'refreshToken'] } });
     res.json({ success: true, trainer });
+  } catch (err) { res.status(500).json({ success: false, message: err.message }); }
+});
+
+// ── Trainer: list own nutrition plans ─────────────────────────
+router.get('/my-nutrition', protect, authorize('trainer'), async (req, res) => {
+  try {
+    const plans = await NutritionPlan.findAll({
+      where: { createdBy: req.user.id, creatorModel: 'Trainer' },
+      order: [['createdAt', 'DESC']],
+    });
+    res.json({ success: true, plans });
+  } catch (err) { res.status(500).json({ success: false, message: err.message }); }
+});
+
+// ── Trainer: assign nutrition plan to a client ─────────────────
+router.post('/assign-nutrition', protect, authorize('trainer'), async (req, res) => {
+  try {
+    const { planId, userId } = req.body;
+    if (!planId || !userId) return res.status(400).json({ success: false, message: 'planId and userId required' });
+    const plan = await NutritionPlan.findByPk(planId);
+    if (!plan) return res.status(404).json({ success: false, message: 'Plan not found' });
+    // Only allow trainer to assign their own plans
+    if (plan.createdBy !== req.user.id) return res.status(403).json({ success: false, message: 'Not your plan' });
+    const current = Array.isArray(plan.assignedTo) ? plan.assignedTo : [];
+    if (!current.includes(userId)) {
+      plan.assignedTo = [...current, userId];
+      await plan.save();
+    }
+    res.json({ success: true, message: 'Plan assigned to client' });
   } catch (err) { res.status(500).json({ success: false, message: err.message }); }
 });
 

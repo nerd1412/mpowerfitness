@@ -23,7 +23,15 @@ const getWorkouts = async (req, res) => {
       offset: (parseInt(page) - 1) * parseInt(limit),
     });
 
-    res.json({ success: true, workouts: rows, total: count, page: parseInt(page), limit: parseInt(limit) });
+    // Also include private workouts assigned to this user
+    let assigned = [];
+    if (req.user?.id) {
+      const all = await Workout.findAll({ where: { isPublic: false }, order: [['createdAt', 'DESC']] });
+      assigned = all.filter(w => Array.isArray(w.assignedTo) && w.assignedTo.includes(req.user.id));
+    }
+
+    const workouts = [...assigned, ...rows.filter(w => !assigned.find(a => a.id === w.id))];
+    res.json({ success: true, workouts, total: count + assigned.length, page: parseInt(page), limit: parseInt(limit) });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }

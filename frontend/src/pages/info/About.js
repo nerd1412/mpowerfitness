@@ -5,8 +5,8 @@ import Footer from '../../components/shared/Footer';
 
 const InfoLayout = ({ children }) => (
   <div style={{ minHeight:'100vh', background:'var(--black)', display:'flex', flexDirection:'column' }}>
-    <header style={{ background:'var(--carbon)', borderBottom:'1px solid var(--border)', padding:'0 clamp(16px,4vw,40px)', height:60, display:'flex', alignItems:'center', justifyContent:'space-between', position:'sticky', top:0, zIndex:100 }}>
-      <LogoFull height={30} linkTo="/"/>
+    <header style={{ background:'var(--carbon)', borderBottom:'1px solid var(--border)', padding:'0 clamp(16px,4vw,40px)', height:72, display:'flex', alignItems:'center', justifyContent:'space-between', position:'sticky', top:0, zIndex:100 }}>
+      <LogoFull height={50} linkTo="/"/>
       <div style={{ display:'flex', gap:12 }}>
         <Link to="/login"    className="btn btn-ghost btn-sm">Sign In</Link>
         <Link to="/register" className="btn btn-primary btn-sm">Get Started</Link>

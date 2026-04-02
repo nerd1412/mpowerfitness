@@ -139,6 +139,7 @@ const Workout = sequelize.define('Workout', {
   isFeatured:  { type: DataTypes.BOOLEAN, defaultValue: false },
   likes:       { type: DataTypes.INTEGER, defaultValue: 0 },
   completions: { type: DataTypes.INTEGER, defaultValue: 0 },
+  assignedTo:  { type: DataTypes.TEXT, defaultValue: '[]', get() { try { return JSON.parse(this.getDataValue('assignedTo')); } catch { return []; } }, set(v) { this.setDataValue('assignedTo', JSON.stringify(v)); } },
 }, { tableName: 'workouts' });
 
 // ==================== WORKOUT SESSION ====================
