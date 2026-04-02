@@ -140,6 +140,7 @@ export const UserSidebar = ({ collapsed, onToggle }) => {
         { to:'/user/sessions',  icon:'🗓️', label:'My Sessions' },
         { to:'/user/bookings',  icon:'📅', label:'My Bookings' },
         { to:'/user/programs',  icon:'🎯', label:'Programs' },
+        { to:'/user/community',  icon:'🫂', label:'Community' },
         { to:'/user/chat',      icon:'💬', label:'Messages' },
         { to:'/user/profile',   icon:'👤', label:'Profile' },
       ]}
@@ -197,7 +198,8 @@ export const AdminSidebar = ({ collapsed, onToggle }) => {
         { to:'/admin/nutrition',     icon:'🥗', label:'Nutrition' },
         { to:'/admin/analytics',     icon:'📈', label:'Analytics' },
         { to:'/admin/notifications', icon:'🔔', label:'Notifications' },
-    { to:'/admin/blog',          icon:'📝', label:'Blog' },
+        { to:'/admin/blog',          icon:'📝', label:'Blog' },
+        { to:'/admin/consultations', icon:'🩺', label:'Consultations' },
       ]}
       onLogout={doLogout}
     />

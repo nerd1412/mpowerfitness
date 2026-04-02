@@ -60,7 +60,11 @@ const User = sequelize.define('User', {
   totalWorkouts:       { type: DataTypes.INTEGER, defaultValue: 0 },
   totalCaloriesBurned: { type: DataTypes.INTEGER, defaultValue: 0 },
   points:              { type: DataTypes.INTEGER, defaultValue: 0 },
-  badges:    { type: DataTypes.TEXT, defaultValue: '[]', get() { try { return JSON.parse(this.getDataValue('badges')); } catch { return []; } }, set(v) { this.setDataValue('badges', JSON.stringify(v)); } },
+  badges:           { type: DataTypes.TEXT, defaultValue: '[]', get() { try { return JSON.parse(this.getDataValue('badges')); } catch { return []; } }, set(v) { this.setDataValue('badges', JSON.stringify(v)); } },
+  healthConditions: { type: DataTypes.TEXT, defaultValue: '[]', get() { try { return JSON.parse(this.getDataValue('healthConditions')); } catch { return []; } }, set(v) { this.setDataValue('healthConditions', JSON.stringify(v)); } },
+  budgetSegment:    { type: DataTypes.STRING, defaultValue: 'mid' }, // budget | mid | premium
+  deliveryPreference: { type: DataTypes.STRING, defaultValue: 'online' }, // online | home | mpower_gym | partner_gym | self_guided
+  consultationDone: { type: DataTypes.BOOLEAN, defaultValue: false },
   refreshToken: DataTypes.TEXT,
   lastLogin:    DataTypes.DATE,
 }, { tableName: 'users' });
@@ -307,8 +311,60 @@ const Blog = sequelize.define('Blog', {
   publishedAt: { type: DataTypes.DATE },
 }, { tableName: 'blogs' });
 
+// ==================== COMMUNITY GROUP ====================
+const CommunityGroup = sequelize.define('CommunityGroup', {
+  id:          { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  name:        { type: DataTypes.STRING, allowNull: false },
+  slug:        { type: DataTypes.STRING, allowNull: false, unique: true },
+  description: DataTypes.TEXT,
+  condition:   DataTypes.STRING,           // pcod, diabetes, thyroid, hypertension, joint_pain, general
+  icon:        { type: DataTypes.STRING, defaultValue: '💪' },
+  color:       { type: DataTypes.STRING, defaultValue: '#C8F135' },
+  memberCount: { type: DataTypes.INTEGER, defaultValue: 0 },
+  isActive:    { type: DataTypes.BOOLEAN, defaultValue: true },
+  isFeatured:  { type: DataTypes.BOOLEAN, defaultValue: false },
+  rules:       { type: DataTypes.TEXT, defaultValue: '[]', get() { try { return JSON.parse(this.getDataValue('rules')); } catch { return []; } }, set(v) { this.setDataValue('rules', JSON.stringify(v)); } },
+}, { tableName: 'community_groups' });
+
+// ==================== COMMUNITY POST ====================
+const CommunityPost = sequelize.define('CommunityPost', {
+  id:        { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  groupId:   { type: DataTypes.UUID, allowNull: false },
+  authorId:  { type: DataTypes.UUID, allowNull: false },
+  authorName:{ type: DataTypes.STRING, allowNull: false },
+  authorRole:{ type: DataTypes.STRING, defaultValue: 'user' },
+  content:   { type: DataTypes.TEXT, allowNull: false },
+  type:      { type: DataTypes.STRING, defaultValue: 'discussion' }, // discussion | milestone | question | resource
+  tags:      { type: DataTypes.TEXT, defaultValue: '[]', get() { try { return JSON.parse(this.getDataValue('tags')); } catch { return []; } }, set(v) { this.setDataValue('tags', JSON.stringify(v)); } },
+  likes:     { type: DataTypes.INTEGER, defaultValue: 0 },
+  likedBy:   { type: DataTypes.TEXT, defaultValue: '[]', get() { try { return JSON.parse(this.getDataValue('likedBy')); } catch { return []; } }, set(v) { this.setDataValue('likedBy', JSON.stringify(v)); } },
+  isPinned:  { type: DataTypes.BOOLEAN, defaultValue: false },
+  isApproved:{ type: DataTypes.BOOLEAN, defaultValue: true },
+}, { tableName: 'community_posts' });
+
+// ==================== CONSULTATION REQUEST ====================
+const ConsultationRequest = sequelize.define('ConsultationRequest', {
+  id:               { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
+  userId:           DataTypes.UUID,
+  name:             { type: DataTypes.STRING, allowNull: false },
+  email:            { type: DataTypes.STRING, allowNull: false },
+  phone:            DataTypes.STRING,
+  age:              DataTypes.INTEGER,
+  gender:           DataTypes.STRING,
+  healthConditions: { type: DataTypes.TEXT, defaultValue: '[]', get() { try { return JSON.parse(this.getDataValue('healthConditions')); } catch { return []; } }, set(v) { this.setDataValue('healthConditions', JSON.stringify(v)); } },
+  primaryGoal:      DataTypes.STRING,
+  currentChallenges:DataTypes.TEXT,
+  fitnessLevel:     DataTypes.STRING,
+  budgetSegment:    DataTypes.STRING,
+  deliveryPreference:DataTypes.STRING,
+  status:           { type: DataTypes.STRING, defaultValue: 'pending' }, // pending | reviewed | assigned | closed
+  adminNotes:       DataTypes.TEXT,
+  assignedTrainerId:DataTypes.UUID,
+}, { tableName: 'consultation_requests' });
+
 module.exports = {
   sequelize, User, Trainer, Admin, Blog,
   Workout, WorkoutSession, Booking, Progress,
-  NutritionPlan, Program, Payment, Message, Conversation, Notification, Blog
+  NutritionPlan, Program, Payment, Message, Conversation, Notification,
+  CommunityGroup, CommunityPost, ConsultationRequest,
 };

@@ -15,7 +15,7 @@ export default function UserTrainers() {
   const [bookDate, setBookDate] = useState('');
   const [bookedSlots, setBookedSlots] = useState([]);
   const [selectedSlot, setSelectedSlot] = useState(null);
-  const [sessionType, setSessionType] = useState('online');
+  const [sessionType, setSessionType] = useState('online_video');
   const [notes, setNotes] = useState('');
   const [paymentModal, setPaymentModal] = useState(null);
   const [pendingBooking, setPendingBooking] = useState(null);
@@ -162,10 +162,10 @@ export default function UserTrainers() {
               {/* Session type */}
               <div className="form-group" style={{ marginBottom:14 }}>
                 <label className="form-label">Session Type</label>
-                <div style={{ display:'flex', gap:8 }}>
-                  {[['online','🖥 Online'],['in_person','📍 In Person']].map(([val,lbl]) => (
+                <div style={{ display:'flex', flexWrap:'wrap', gap:7 }}>
+                  {[['online_video','💻 Online Video'],['trainer_at_home','🏠 At My Home'],['mpower_gym','🏋️ MPower Gym'],['partner_gym','🤝 My Gym'],['self_guided','📱 Self-Guided']].map(([val,lbl]) => (
                     <button key={val} type="button" onClick={() => setSessionType(val)}
-                      style={{ flex:1, padding:'9px 8px', borderRadius:'var(--r-md)', border:`1.5px solid ${sessionType===val?'var(--lime)':'var(--border)'}`, background:sessionType===val?'rgba(200,241,53,.08)':'var(--s2)', cursor:'pointer', fontSize:13, fontWeight:sessionType===val?700:500, color:sessionType===val?'var(--lime)':'var(--t2)', transition:'all .14s', fontFamily:'var(--font-body)' }}>
+                      style={{ padding:'8px 12px', borderRadius:'var(--r-md)', border:`1.5px solid ${sessionType===val?'var(--lime)':'var(--border)'}`, background:sessionType===val?'rgba(200,241,53,.08)':'var(--s2)', cursor:'pointer', fontSize:12, fontWeight:sessionType===val?700:500, color:sessionType===val?'var(--lime)':'var(--t2)', transition:'all .14s', fontFamily:'var(--font-body)' }}>
                       {lbl}
                     </button>
                   ))}

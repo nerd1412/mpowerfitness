@@ -25,6 +25,7 @@ const UserPrograms   = lazy(() => import('./pages/user/Programs'));
 const UserProfile    = lazy(() => import('./pages/user/Profile'));
 const UserChat       = lazy(() => import('./pages/user/Chat'));
 const UserSessions   = lazy(() => import('./pages/user/Sessions'));
+const UserCommunity  = lazy(() => import('./pages/user/Community'));
 
 const TrainerDashboard = lazy(() => import('./pages/trainer/Dashboard'));
 const TrainerClients   = lazy(() => import('./pages/trainer/Clients'));
@@ -47,6 +48,7 @@ const AdminNutrition   = lazy(() => import('./pages/admin/Nutrition'));
 const AdminAnalytics   = lazy(() => import('./pages/admin/Analytics'));
 const AdminNotifications = lazy(() => import('./pages/admin/Notifications'));
 const AdminBlog          = lazy(() => import('./pages/admin/Blog'));
+const AdminConsultations = lazy(() => import('./pages/admin/Consultations'));
 
 // Info pages
 const AboutPage         = lazy(() => import('./pages/info/About'));
@@ -149,6 +151,8 @@ function App() {
             <Route path="programs"  element={<UserPrograms/>}/>
             <Route path="chat"      element={<UserChat/>}/>
             <Route path="sessions"  element={<UserSessions/>}/>
+            <Route path="community" element={<UserCommunity/>}/>
+            <Route path="community/:slug" element={<UserCommunity/>}/>
             <Route path="profile"   element={<UserProfile/>}/>
           </Route>
 
@@ -179,7 +183,8 @@ function App() {
             <Route path="nutrition"     element={<AdminNutrition/>}/>
             <Route path="analytics"     element={<AdminAnalytics/>}/>
             <Route path="notifications" element={<AdminNotifications/>}/>
-            <Route path="blog"           element={<AdminBlog/>}/>
+            <Route path="blog"          element={<AdminBlog/>}/>
+            <Route path="consultations" element={<AdminConsultations/>}/>
           </Route>
 
           {/* Info / legal pages — public */}

@@ -1,7 +1,7 @@
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '../../.env') });
 const bcrypt = require('bcryptjs');
-const { Admin, Workout, Program, NutritionPlan } = require('../models/index');
+const { Admin, Workout, Program, NutritionPlan, CommunityGroup } = require('../models/index');
 
 /* ─── Helper ──────────────────────────────────────────────────── */
 const exists = async (Model, where) => !!(await Model.findOne({ where }));
@@ -202,6 +202,44 @@ const seed = async () => {
       ],
     });
     console.log('✅ Nutrition plan seeded — Balanced Macro Blueprint');
+  }
+
+  /* ── 5. Community groups ─────────────────────────────── */
+  const GROUPS = [
+    { name:'PCOD & Hormonal Health', slug:'pcod-hormonal-health', condition:'pcod',
+      icon:'🌸', color:'#FF6B9D', isFeatured:true,
+      description:'A safe space for women managing PCOD, PCOS and hormonal imbalances. Share your fitness wins, nutrition tips and emotional journey. Evidence-based guidance on low-GI eating, strength training for insulin sensitivity, and stress management.',
+      rules:['Be kind and supportive — health journeys are personal','Share personal experiences, not medical prescriptions','Tag posts with your condition type for easy filtering'] },
+    { name:'Diabetes & Metabolic Health', slug:'diabetes-metabolic', condition:'diabetes',
+      icon:'💉', color:'#4E9FFF', isFeatured:true,
+      description:'Fitness and nutrition support for people with Type 1, Type 2 diabetes and insulin resistance. Backed by ADA (American Diabetes Association) guidelines — resistance training improves HbA1c, walking after meals reduces glucose spikes.',
+      rules:['Always consult your doctor before changing medication','Share blood sugar logs to inspire and be inspired','Post-meal walks are everyone\'s friend here'] },
+    { name:'Thyroid Warriors', slug:'thyroid-warriors', condition:'thyroid',
+      icon:'🦋', color:'#A78BFA', isFeatured:true,
+      description:'Hypothyroid, hyperthyroid, Hashimoto\'s — this group gets it. Slow metabolism, fatigue, brain fog. Science shows selenium-rich foods, iodine management and moderate-intensity training can support thyroid function.',
+      rules:['Share lab values with context, not alarm','Celebrate small wins — energy levels count!','Tag posts #hypo or #hyper for clarity'] },
+    { name:'Joint Pain & Mobility', slug:'joint-pain-mobility', condition:'joint_pain',
+      icon:'🦴', color:'#22D97A', isFeatured:false,
+      description:'For people managing osteoarthritis, rheumatoid arthritis, knee/hip issues. Low-impact doesn\'t mean low results. Water aerobics, resistance bands, chair yoga — all valid. EULAR guidelines support exercise as first-line joint treatment.',
+      rules:['No pain, no gain is a myth here — comfort is progress','Share modifications that worked for you','Consult physio before trying new exercises'] },
+    { name:'Hypertension & Heart Health', slug:'hypertension-heart', condition:'hypertension',
+      icon:'❤️', color:'#FF4D4D', isFeatured:false,
+      description:'Managing blood pressure through movement and nutrition. DASH diet, Zone 2 cardio (50–60% max HR), and breathing exercises (Bhramari pranayama) are clinically proven to reduce systolic BP by 5–10 mmHg.',
+      rules:['Always know your resting BP before intense workouts','Share your "green zone" workout routines','Sodium counts — share low-sodium Indian recipes'] },
+    { name:'Weight Loss Together', slug:'weight-loss-together', condition:'weight_loss',
+      icon:'🔥', color:'#FF5F1F', isFeatured:true,
+      description:'For anyone on a fat-loss journey. Evidence-based: 500 kcal deficit/day, protein at 1.6g/kg bodyweight, progressive resistance training, 7–9 hrs sleep. This isn\'t a crash diet group — it\'s a lifestyle group.',
+      rules:['No crash diets or extreme deficit talk','Celebrate non-scale victories (energy, clothes, strength)','Weekly check-ins keep us accountable'] },
+    { name:'Beginners & Getting Started', slug:'beginners-getting-started', condition:'general',
+      icon:'🌱', color:'#C8F135', isFeatured:true,
+      description:'New to fitness? This is where everyone starts. No judgement. Ask anything. The best workout is the one you actually do. Research shows social support is one of the strongest predictors of exercise adherence (ACSM, 2020).',
+      rules:['There are no stupid questions','Share your Day 1 — it inspires others','Consistency > perfection, every time'] },
+  ];
+  for (const g of GROUPS) {
+    if (!(await exists(CommunityGroup, { slug: g.slug }))) {
+      await CommunityGroup.create(g);
+      console.log(`✅ Community group seeded — ${g.name}`);
+    }
   }
 
   console.log('\n🚀 Seeding complete!\n');

@@ -27,6 +27,8 @@ const notificationsRouter = require('./routes/notifications');
 const nutritionRouter     = require('./routes/nutrition');
 const programsRouter      = require('./routes/programs');
 const blogsRouter         = require('./routes/blogs');
+const communityRouter     = require('./routes/community');
+const consultationRouter  = require('./routes/consultation');
 
 ['avatars','workouts','progress'].forEach(dir => {
   const p = path.join(__dirname, '../uploads', dir);
@@ -80,6 +82,8 @@ app.use('/api/notifications', notificationsRouter);
 app.use('/api/nutrition',     nutritionRouter);
 app.use('/api/chat',          chatRouter);
 app.use('/api/blogs',         blogsRouter);
+app.use('/api/community',     communityRouter);
+app.use('/api/consultations', consultationRouter);
 
 app.get('/health', (req, res) => res.json({ 
   status: 'healthy', 

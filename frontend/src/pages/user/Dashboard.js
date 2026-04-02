@@ -1,8 +1,69 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import useAuthStore from '../../store/authStore';
 import { useUserDashboard } from '../../hooks/useQueries';
+import ConsultationModal from '../../components/shared/ConsultationModal';
+
+/* ── Condition-specific science tips ─────────────────────────────── */
+const CONDITION_TIPS = {
+  pcod: {
+    color:'#FF6B9D', icon:'🌸', title:'PCOD / PCOS',
+    tips:[
+      'Resistance training 3×/week improves insulin sensitivity and reduces androgen levels (ACSM 2020)',
+      'Low-GI diet (oats, dal, brown rice) helps regulate blood sugar spikes that worsen PCOD symptoms',
+      'Aim for 7–9 hrs sleep — poor sleep raises cortisol and worsens hormonal imbalance',
+    ],
+  },
+  thyroid: {
+    color:'#A78BFA', icon:'🦋', title:'Thyroid Health',
+    tips:[
+      'Moderate-intensity exercise (Zone 2 cardio) supports thyroid function without over-stressing the system',
+      'Selenium-rich foods (Brazil nuts, eggs, sunflower seeds) support T4 → T3 conversion',
+      'Avoid cruciferous vegetables raw in large amounts — cooking reduces goitrogen content',
+    ],
+  },
+  diabetes: {
+    color:'#4E9FFF', icon:'💉', title:'Diabetes Management',
+    tips:[
+      'A 10–15 min walk after meals reduces postprandial glucose by 22% (ADA 2022)',
+      'Resistance training improves HbA1c more than cardio alone — aim for 2× per week (ADA guidelines)',
+      'Pair carbs with protein & fat at every meal to blunt the glycemic response',
+    ],
+  },
+  insulin_resistance: {
+    color:'#22D97A', icon:'📊', title:'Insulin Resistance',
+    tips:[
+      'High-intensity interval training (HIIT) is the most effective exercise for improving insulin sensitivity',
+      'Reduce refined carbs; increase fibre from vegetables, legumes, and whole grains',
+      'Intermittent fasting (16:8) can reduce fasting insulin by up to 28% (Longo & Mattson, 2014)',
+    ],
+  },
+  hypertension: {
+    color:'#FF4D4D', icon:'❤️', title:'Blood Pressure',
+    tips:[
+      'Zone 2 cardio (50–60% max HR) 30 min/day reduces systolic BP by 5–10 mmHg (DASH study)',
+      'Bhramari (humming bee) pranayama for 5 minutes daily lowers systolic BP acutely',
+      'Limit sodium to <2,000 mg/day; increase potassium via bananas, spinach, curd',
+    ],
+  },
+  joint_pain: {
+    color:'#22D97A', icon:'🦴', title:'Joint Health',
+    tips:[
+      'Low-impact exercise (swimming, cycling, chair yoga) reduces joint pain without loading the joint',
+      'Strengthening muscles around the joint (quadriceps for knee OA) reduces pain by 40% (EULAR)',
+      'Omega-3 fatty acids (walnuts, flaxseed, fish) reduce inflammatory markers CRP and IL-6',
+    ],
+  },
+  obesity: {
+    color:'var(--electric-orange)', icon:'⚖️', title:'Weight & Metabolism',
+    tips:[
+      'Protein at 1.6g/kg bodyweight preserves muscle during fat loss (ISSN 2017)',
+      'Non-exercise activity thermogenesis (NEAT) — walks, stairs — can add 300–500 kcal/day burn',
+      'Sleep 7–9 hours: sleep deprivation raises ghrelin (hunger hormone) and reduces leptin (satiety)',
+    ],
+  },
+};
 
 const GOAL_MAP = {
   weight_loss:        { label:'Weight Loss',       icon:'🔥' },
@@ -35,6 +96,7 @@ const SkeletonStat = () => (
 export default function UserDashboard() {
   const { user: authUser } = useAuthStore();
   const { data: dash, isLoading } = useUserDashboard();
+  const [showConsult, setShowConsult] = useState(false);
 
   const u = dash?.user || authUser || {};
   const goal = GOAL_MAP[u.fitnessGoal] || { label:'General Fitness', icon:'⚡' };
@@ -91,6 +153,56 @@ export default function UserDashboard() {
             <div style={{ fontSize:12, color:'var(--t2)' }}>Get access to trainer sessions, nutrition plans & more</div>
           </div>
           <Link to="/user/programs" className="btn btn-primary btn-sm">View Plans →</Link>
+        </div>
+      )}
+
+      {/* Condition-aware insights */}
+      {!isLoading && (u.healthConditions || []).filter(c => CONDITION_TIPS[c]).length > 0 && (
+        <div style={{ marginBottom:16 }}>
+          {(u.healthConditions || []).filter(c => CONDITION_TIPS[c]).slice(0, 2).map(cond => {
+            const t = CONDITION_TIPS[cond];
+            return (
+              <div key={cond} style={{ background:'var(--surface)', border:`1px solid ${t.color}22`,
+                borderLeft:`3px solid ${t.color}`, borderRadius:12, padding:'16px 18px', marginBottom:10 }}>
+                <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:10 }}>
+                  <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                    <span style={{ fontSize:18 }}>{t.icon}</span>
+                    <span style={{ fontWeight:700, fontSize:13, color:t.color }}>{t.title} — Today's Tips</span>
+                  </div>
+                  <span style={{ fontSize:10, color:'var(--text-muted)', background:'var(--surface-2)',
+                    border:'1px solid var(--border)', borderRadius:20, padding:'2px 8px' }}>science-backed</span>
+                </div>
+                <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
+                  {t.tips.slice(0, 2).map((tip, i) => (
+                    <div key={i} style={{ display:'flex', gap:8, fontSize:13, color:'var(--text-secondary)', lineHeight:1.5 }}>
+                      <span style={{ color:t.color, fontWeight:700, flexShrink:0 }}>→</span>
+                      {tip}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Free consultation CTA */}
+      {!isLoading && !u.consultationDone && (
+        <div style={{ background:'linear-gradient(135deg,rgba(200,241,53,0.06),rgba(255,95,31,0.05))',
+          border:'1px solid var(--border)', borderRadius:12, padding:'16px 20px',
+          display:'flex', justifyContent:'space-between', alignItems:'center',
+          flexWrap:'wrap', gap:12, marginBottom:16 }}>
+          <div>
+            <div style={{ fontWeight:700, fontSize:14, marginBottom:3 }}>
+              🎯 Get a Free Personalised Health Consultation
+            </div>
+            <div style={{ fontSize:12, color:'var(--text-secondary)' }}>
+              Tell us your health conditions — our certified expert will design a plan just for you. No commitment.
+            </div>
+          </div>
+          <button className="btn btn-primary btn-sm" onClick={() => setShowConsult(true)}>
+            Book Free Consultation →
+          </button>
         </div>
       )}
 
@@ -199,6 +311,24 @@ export default function UserDashboard() {
           </div>
         </div>
       )}
+
+      {/* Community quick link */}
+      <div style={{ marginTop:16, padding:'16px 20px', background:'var(--surface)',
+        border:'1px solid var(--border)', borderRadius:12,
+        display:'flex', alignItems:'center', justifyContent:'space-between', flexWrap:'wrap', gap:12 }}>
+        <div style={{ display:'flex', alignItems:'center', gap:12 }}>
+          <span style={{ fontSize:26 }}>🫂</span>
+          <div>
+            <div style={{ fontWeight:700, fontSize:14 }}>Join Condition-Specific Communities</div>
+            <div style={{ fontSize:12, color:'var(--text-secondary)' }}>
+              PCOD, Diabetes, Thyroid, Weight Loss & more — connect with people on the same journey
+            </div>
+          </div>
+        </div>
+        <Link to="/user/community" className="btn btn-ghost btn-sm">Explore →</Link>
+      </div>
+
+      {showConsult && <ConsultationModal onClose={() => setShowConsult(false)}/>}
     </div>
   );
 }
