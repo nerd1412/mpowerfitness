@@ -56,7 +56,7 @@ const Chip = ({ selected, onClick, icon, label }) => (
 );
 
 const ConsultationModal = ({ onClose }) => {
-  const { user } = useAuthStore();
+  const { user, updateUser } = useAuthStore();
   const [form, setForm] = useState({
     name: user?.name || '',
     email: user?.email || '',
@@ -74,7 +74,11 @@ const ConsultationModal = ({ onClose }) => {
 
   const submit = useMutation({
     mutationFn: (body) => api.post('/consultations', body),
-    onSuccess: () => setDone(true),
+    onSuccess: () => {
+      setDone(true);
+      // Immediately update persisted Zustand store — survives page refresh
+      updateUser({ consultationDone: true });
+    },
     onError: (e) => toast.error(e.response?.data?.message || 'Failed to submit. Try again.'),
   });
 

@@ -9,7 +9,7 @@ import Footer from '../shared/Footer';
 const TITLES = {
   '/user/dashboard':'Dashboard','/user/workouts':'Workout Library',
   '/user/progress':'Progress','/user/nutrition':'Nutrition',
-  '/user/trainers':'Find Trainers','/user/sessions':'My Sessions','/user/bookings':'My Bookings',
+  '/user/trainers':'My Trainer','/user/sessions':'My Sessions','/user/bookings':'My Bookings',
   '/user/programs':'Programs','/user/chat':'Messages','/user/community':'Community','/user/profile':'Profile',
   '/trainer/dashboard':'Dashboard','/trainer/clients':'My Clients',
   '/trainer/schedule':'Availability','/trainer/bookings':'Bookings',

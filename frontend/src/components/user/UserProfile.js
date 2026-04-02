@@ -48,7 +48,14 @@ export default function UserProfile() {
 
   if (loading || !form) return <div style={{ maxWidth: 700 }}>{Array(5).fill(0).map((_, i) => <Skeleton key={i} />)}</div>;
 
-  const bmi = form.height && form.weight ? (form.weight / ((form.height / 100) ** 2)).toFixed(1) : null;
+  const bmiRaw = form.height && form.weight ? form.weight / ((form.height / 100) ** 2) : null;
+  const bmi = bmiRaw ? bmiRaw.toFixed(1) : null;
+  const bmiCategory = bmiRaw
+    ? bmiRaw < 18.5 ? { label:'Underweight', color:'#4E9FFF' }
+    : bmiRaw < 25   ? { label:'Normal',      color:'var(--success)' }
+    : bmiRaw < 30   ? { label:'Overweight',  color:'var(--warning)' }
+    :                  { label:'Obese',       color:'var(--error)' }
+    : null;
   const TABS = [{ id:'personal', label:'👤 Personal' }, { id:'fitness', label:'💪 Fitness' }, { id:'body', label:'⚖️ Body Metrics' }];
 
   return (
@@ -113,10 +120,36 @@ export default function UserProfile() {
               <F label="Current Weight (kg)"><input className="form-input" type="number" min="30" max="300" step="0.1" value={form.weight} onChange={e=>set('weight',e.target.value)} placeholder="70"/></F>
               <F label="Target Weight (kg)"><input className="form-input" type="number" min="30" max="300" step="0.1" value={form.targetWeight} onChange={e=>set('targetWeight',e.target.value)} placeholder="65"/></F>
             </div>
-            {bmi && (
-              <div style={{ background:'var(--s2)', borderRadius:'var(--r-md)', padding:'12px 16px', display:'flex', gap:24 }}>
-                <div style={{ textAlign:'center' }}><div style={{ fontSize:24, fontWeight:800, color:'var(--lime)' }}>{bmi}</div><div style={{ fontSize:12, color:'var(--t3)' }}>BMI</div></div>
-                {form.targetWeight && <div style={{ textAlign:'center' }}><div style={{ fontSize:24, fontWeight:800, color: Number(form.weight)>Number(form.targetWeight)?'var(--warning)':'var(--success)' }}>{(form.weight-form.targetWeight).toFixed(1)} kg</div><div style={{ fontSize:12, color:'var(--t3)' }}>to target</div></div>}
+            {bmi && bmiCategory && (
+              <div style={{ background:'var(--s2)', borderRadius:'var(--r-md)', padding:'14px 16px', display:'flex', gap:20, flexWrap:'wrap' }}>
+                <div style={{ textAlign:'center', minWidth:64 }}>
+                  <div style={{ fontSize:26, fontWeight:800, color:bmiCategory.color, lineHeight:1 }}>{bmi}</div>
+                  <div style={{ fontSize:12, color:'var(--t3)', marginTop:2 }}>BMI</div>
+                  <div style={{ fontSize:11, fontWeight:700, color:bmiCategory.color, marginTop:3 }}>{bmiCategory.label}</div>
+                </div>
+                <div style={{ flex:1, minWidth:120 }}>
+                  <div style={{ fontSize:11, color:'var(--t3)', marginBottom:6 }}>BMI Scale (WHO)</div>
+                  {[['< 18.5','Underweight','#4E9FFF'],['18.5–24.9','Normal','var(--success)'],['25–29.9','Overweight','var(--warning)'],['≥ 30','Obese','var(--error)']].map(([range, cat, col]) => (
+                    <div key={cat} style={{ display:'flex', gap:8, alignItems:'center', marginBottom:3,
+                      opacity: bmiCategory.label === cat ? 1 : 0.45 }}>
+                      <div style={{ width:8, height:8, borderRadius:'50%', background:col, flexShrink:0 }}/>
+                      <span style={{ fontSize:11, color:col, fontWeight: bmiCategory.label === cat ? 700 : 400 }}>{cat}</span>
+                      <span style={{ fontSize:11, color:'var(--t3)', marginLeft:'auto' }}>{range}</span>
+                    </div>
+                  ))}
+                </div>
+                {form.targetWeight && Number(form.targetWeight) > 0 && (
+                  <div style={{ textAlign:'center', minWidth:64 }}>
+                    <div style={{ fontSize:26, fontWeight:800, lineHeight:1,
+                      color: Number(form.weight) > Number(form.targetWeight) ? 'var(--warning)' : 'var(--success)' }}>
+                      {Math.abs(form.weight - form.targetWeight).toFixed(1)}
+                    </div>
+                    <div style={{ fontSize:12, color:'var(--t3)', marginTop:2 }}>kg</div>
+                    <div style={{ fontSize:11, color:'var(--t3)', marginTop:2 }}>
+                      {Number(form.weight) > Number(form.targetWeight) ? 'to lose' : 'to gain'}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>

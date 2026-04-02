@@ -28,7 +28,7 @@ const AdminLogin = () => {
 
       <div style={{ width:'100%', maxWidth:400, animation:'slideUp 0.45s ease forwards' }}>
         <div style={{ display:'flex', justifyContent:'center', marginBottom:36 }}>
-          <LogoFull height={38} />
+          <LogoFull height={55} />
         </div>
 
         <div style={{ background:'var(--surface)', border:'1px solid rgba(78,159,255,0.15)', borderRadius:16, padding:'36px 32px' }}>

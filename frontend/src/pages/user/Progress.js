@@ -1,8 +1,8 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState } from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import useAuthStore from '../../store/authStore';
 import { useProgress, useLogProgress, useDeleteProgress } from '../../hooks/useQueries';
-import BluetoothSync from '../../components/shared/BluetoothSync';
+// BluetoothSync removed — device sync disabled
 
 const CHART = { contentStyle:{ background:'var(--s2)', border:'1px solid var(--border)', borderRadius:8, fontSize:12 }, axisProps:{ tick:{fill:'var(--t3)',fontSize:11}, axisLine:false, tickLine:false } };
 
@@ -40,16 +40,6 @@ export default function UserProgress() {
 
   const set = (k,v) => setForm(f => ({...f,[k]:v}));
 
-  // Called by BluetoothSync when user taps "Use This Data"
-  const handleBluetoothData = useCallback((metrics) => {
-    setForm(f => ({
-      ...f,
-      ...(metrics.weight        != null ? { weight:       String(metrics.weight)        } : {}),
-      ...(metrics.bodyFat       != null ? { bodyFat:      String(metrics.bodyFat)       } : {}),
-      ...(metrics.caloriesBurned!= null ? { caloriesConsumed: String(metrics.caloriesBurned) } : {}),
-    }));
-    setShowLog(true);
-  }, []);
 
   const handleLog = () => {
     const payload = {
@@ -106,10 +96,6 @@ export default function UserProgress() {
         <button className="btn btn-primary" onClick={() => setShowLog(true)}>+ Log Progress</button>
       </div>
 
-      {/* Bluetooth Device Sync — auto-fill progress data from fitness devices */}
-      <div style={{ marginBottom: 20 }}>
-        <BluetoothSync onDataSync={handleBluetoothData} />
-      </div>
 
       {/* Stats */}
       <div className="grid-stats mb-20">
@@ -220,12 +206,6 @@ export default function UserProgress() {
             </div>
 
             <div style={{ display:'grid', gap:14 }}>
-              {/* Bluetooth sync inside the modal */}
-              <BluetoothSync onDataSync={(m) => {
-                if (m.weight)        set('weight',       String(m.weight));
-                if (m.bodyFat)       set('bodyFat',      String(m.bodyFat));
-                if (m.caloriesBurned)set('caloriesConsumed', String(m.caloriesBurned));
-              }} />
 
               <div className="form-group">
                 <label className="form-label">Date</label>

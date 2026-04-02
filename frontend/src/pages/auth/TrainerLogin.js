@@ -30,7 +30,7 @@ const TrainerLogin = () => {
 
       <div style={{ width:'100%', maxWidth:420, animation:'slideUp 0.45s ease forwards' }}>
         <div style={{ display:'flex', justifyContent:'center', marginBottom:36 }}>
-          <LogoFull height={38} />
+          <LogoFull height={55} />
         </div>
 
         <div style={{ background:'var(--surface)', border:'1px solid rgba(255,95,31,0.15)', borderRadius:16, padding:'36px 32px' }}>

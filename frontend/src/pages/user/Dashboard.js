@@ -98,7 +98,7 @@ export default function UserDashboard() {
   const { data: dash, isLoading } = useUserDashboard();
   const [showConsult, setShowConsult] = useState(false);
 
-  const u = dash?.user || authUser || {};
+  const u = { ...(authUser || {}), ...(dash?.user || {}) };
   const goal = GOAL_MAP[u.fitnessGoal] || { label:'General Fitness', icon:'⚡' };
   const trainer = dash?.user?.assignedTrainer || null;
   const sub = { plan: u.subscriptionPlan||'free', isActive: u.subscriptionActive||false };
@@ -186,8 +186,8 @@ export default function UserDashboard() {
         </div>
       )}
 
-      {/* Free consultation CTA */}
-      {!isLoading && !u.consultationDone && (
+      {/* Free consultation CTA — check persisted store (authUser) first */}
+      {!isLoading && !authUser?.consultationDone && !u.consultationDone && (
         <div style={{ background:'linear-gradient(135deg,rgba(200,241,53,0.06),rgba(255,95,31,0.05))',
           border:'1px solid var(--border)', borderRadius:12, padding:'16px 20px',
           display:'flex', justifyContent:'space-between', alignItems:'center',
@@ -328,7 +328,9 @@ export default function UserDashboard() {
         <Link to="/user/community" className="btn btn-ghost btn-sm">Explore →</Link>
       </div>
 
-      {showConsult && <ConsultationModal onClose={() => setShowConsult(false)}/>}
+      {showConsult && !authUser?.consultationDone && (
+        <ConsultationModal onClose={() => setShowConsult(false)}/>
+      )}
     </div>
   );
 }

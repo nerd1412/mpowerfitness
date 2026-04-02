@@ -136,7 +136,7 @@ export const UserSidebar = ({ collapsed, onToggle }) => {
         { to:'/user/workouts',  icon:'💪', label:'Workouts' },
         { to:'/user/nutrition', icon:'🥗', label:'Nutrition' },
         { to:'/user/progress',  icon:'📊', label:'Progress' },
-        { to:'/user/trainers',  icon:'🏅', label:'Find Trainers' },
+        { to:'/user/trainers',  icon:'🏅', label:'My Trainer' },
         { to:'/user/sessions',  icon:'🗓️', label:'My Sessions' },
         { to:'/user/bookings',  icon:'📅', label:'My Bookings' },
         { to:'/user/programs',  icon:'🎯', label:'Programs' },
@@ -158,7 +158,6 @@ export const TrainerSidebar = ({ collapsed, onToggle }) => {
     <SidebarShell
       collapsed={collapsed} onToggle={onToggle}
       accent="255,95,31"
-      badge="Trainer" badgeClass="badge-orange"
       userSub={`⭐ ${user?.rating?.toFixed(1) || '5.0'} rating`}
       navItems={[
         { to:'/trainer/dashboard', icon:'⊞', label:'Dashboard' },
@@ -185,7 +184,6 @@ export const AdminSidebar = ({ collapsed, onToggle }) => {
     <SidebarShell
       collapsed={collapsed} onToggle={onToggle}
       accent="78,159,255"
-      badge="Admin" badgeClass="badge-info"
       userSub={user?.role?.toUpperCase() || 'ADMIN'}
       navItems={[
         { to:'/admin/dashboard',     icon:'⊞', label:'Overview' },

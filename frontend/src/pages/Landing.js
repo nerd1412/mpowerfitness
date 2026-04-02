@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState, lazy, Suspense } from 'react';
 import { Link } from 'react-router-dom';
 import { LogoFull } from '../components/shared/Logo';
 import Footer from '../components/shared/Footer';
+import useAuthStore from '../store/authStore';
 
 const ConsultationModal = lazy(() => import('../components/shared/ConsultationModal'));
 
@@ -9,6 +10,8 @@ const Landing = () => {
   const heroRef = useRef(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showConsult, setShowConsult] = useState(false);
+  const { user: authUser } = useAuthStore();
+  const consultationDone = authUser?.consultationDone;
 
   useEffect(() => {
     const handleMouseMove = (e) => {
@@ -181,9 +184,11 @@ const Landing = () => {
                 Start Your Journey Free
                 <span style={{ fontSize: 18 }}>→</span>
               </Link>
-              <button onClick={() => setShowConsult(true)} className="btn btn-ghost btn-xl" style={{ fontFamily:'var(--font-body)' }}>
-                🎯 Free Consultation
-              </button>
+              {!consultationDone && (
+                <button onClick={() => setShowConsult(true)} className="btn btn-ghost btn-xl" style={{ fontFamily:'var(--font-body)' }}>
+                  🎯 Free Consultation
+                </button>
+              )}
             </div>
             <div className="flex items-center gap-lg" style={{ marginTop: 40 }}>
               <div style={{ display: 'flex' }}>
@@ -326,7 +331,7 @@ const Landing = () => {
         </div>
       </section>
       <Footer variant="landing"/>
-      {showConsult && (
+      {showConsult && !consultationDone && (
         <Suspense fallback={null}>
           <ConsultationModal onClose={() => setShowConsult(false)}/>
         </Suspense>
