@@ -1,13 +1,19 @@
 const express = require('express');
 const { protect, authorize } = require('../middleware/auth');
 const { Program } = require('../models/index');
+const cache = require('../utils/cache');
 
 const router = express.Router();
 
 router.get('/', async (req, res) => {
   try {
+    const cached = await cache.get('programs:list');
+    if (cached) return res.json(cached);
+
     const programs = await Program.findAll({ where: { isActive: true }, order: [['isFeatured', 'DESC'], ['createdAt', 'DESC']] });
-    res.json({ success: true, programs });
+    const payload = { success: true, programs };
+    await cache.set('programs:list', payload, 600); // Cache 10 min
+    res.json(payload);
   } catch (err) { res.status(500).json({ success: false, message: err.message }); }
 });
 
@@ -22,6 +28,7 @@ router.get('/:id', async (req, res) => {
 router.post('/', protect, authorize('admin', 'superadmin'), async (req, res) => {
   try {
     const program = await Program.create({ ...req.body, createdBy: req.user.id });
+    await cache.del('programs:list'); // Invalidate
     res.status(201).json({ success: true, program });
   } catch (err) { res.status(500).json({ success: false, message: err.message }); }
 });
@@ -30,6 +37,7 @@ router.put('/:id', protect, authorize('admin', 'superadmin'), async (req, res) =
   try {
     await Program.update(req.body, { where: { id: req.params.id } });
     const program = await Program.findByPk(req.params.id);
+    await cache.del('programs:list'); // Invalidate
     res.json({ success: true, program });
   } catch (err) { res.status(500).json({ success: false, message: err.message }); }
 });
@@ -37,6 +45,7 @@ router.put('/:id', protect, authorize('admin', 'superadmin'), async (req, res) =
 router.delete('/:id', protect, authorize('admin', 'superadmin'), async (req, res) => {
   try {
     await Program.destroy({ where: { id: req.params.id } });
+    await cache.del('programs:list'); // Invalidate
     res.json({ success: true });
   } catch (err) { res.status(500).json({ success: false, message: err.message }); }
 });

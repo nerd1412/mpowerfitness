@@ -1,10 +1,19 @@
 const { Op } = require('sequelize');
 const { Workout, WorkoutSession, User } = require('../models/index');
 const { checkAndAwardBadges, updateStreak } = require('../utils/gamification');
+const cache = require('../utils/cache');
 
 const getWorkouts = async (req, res) => {
   try {
     const { category, difficulty, search, limit = 50, page = 1, featured } = req.query;
+
+    // Cache key from query params (skip cache if user has assigned workouts)
+    const cacheKey = `workouts:${category||''}:${difficulty||''}:${search||''}:${featured||''}:${page}:${limit}`;
+    if (!req.user?.id) {
+      const cached = await cache.get(cacheKey);
+      if (cached) return res.json(cached);
+    }
+
     const where = { isPublic: true };
     if (category && category !== 'all') where.category = category;
     if (difficulty && difficulty !== 'all') where.difficulty = difficulty;
@@ -31,7 +40,12 @@ const getWorkouts = async (req, res) => {
     }
 
     const workouts = [...assigned, ...rows.filter(w => !assigned.find(a => a.id === w.id))];
-    res.json({ success: true, workouts, total: count + assigned.length, page: parseInt(page), limit: parseInt(limit) });
+    const payload = { success: true, workouts, total: count + assigned.length, page: parseInt(page), limit: parseInt(limit) };
+
+    // Cache public-only responses for 5 min
+    if (!req.user?.id) await cache.set(cacheKey, payload, 300);
+
+    res.json(payload);
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -54,6 +68,7 @@ const createWorkout = async (req, res) => {
       createdBy: req.user.id,
       creatorModel: req.userRole === 'trainer' ? 'Trainer' : 'Admin',
     });
+    await cache.delPattern('workouts:*'); // Invalidate workout list cache
     res.status(201).json({ success: true, workout });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -65,6 +80,7 @@ const updateWorkout = async (req, res) => {
     const workout = await Workout.findByPk(req.params.id);
     if (!workout) return res.status(404).json({ success: false, message: 'Workout not found' });
     await workout.update(req.body);
+    await cache.delPattern('workouts:*'); // Invalidate cache
     res.json({ success: true, workout });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -74,6 +90,7 @@ const updateWorkout = async (req, res) => {
 const deleteWorkout = async (req, res) => {
   try {
     await Workout.destroy({ where: { id: req.params.id } });
+    await cache.delPattern('workouts:*'); // Invalidate cache
     res.json({ success: true, message: 'Workout deleted' });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });

@@ -237,6 +237,88 @@ export const AdminWorkouts = () => {
 /* ════════════════════════════════════════════════════════════════
    NUTRITION
 ════════════════════════════════════════════════════════════════ */
+const MEAL_TEMPLATES = {
+  weight_loss: [
+    { name:'Breakfast', time:'07:30', items:[{ name:'Oats + banana', quantity:'60g oats, 1 banana', calories:320, protein:12, carbs:58, fat:5 },{ name:'Green tea', quantity:'1 cup', calories:2, protein:0, carbs:0, fat:0 }]},
+    { name:'Mid-Morning', time:'10:30', items:[{ name:'Mixed nuts', quantity:'30g', calories:185, protein:5, carbs:6, fat:16 }]},
+    { name:'Lunch',     time:'13:00', items:[{ name:'Dal + sabzi + 2 roti', quantity:'standard serving', calories:430, protein:20, carbs:64, fat:8 }]},
+    { name:'Dinner',    time:'19:30', items:[{ name:'Grilled chicken / paneer', quantity:'150g', calories:220, protein:35, carbs:3, fat:7 },{ name:'Salad', quantity:'large bowl', calories:60, protein:3, carbs:10, fat:1 }]},
+  ],
+  muscle_gain: [
+    { name:'Breakfast',  time:'07:00', items:[{ name:'Eggs + toast + milk', quantity:'4 eggs, 2 toast, 300ml milk', calories:580, protein:40, carbs:48, fat:18 }]},
+    { name:'Pre-Workout',time:'11:00', items:[{ name:'Banana + peanut butter', quantity:'2 bananas + 2 tbsp PB', calories:380, protein:9, carbs:60, fat:14 }]},
+    { name:'Lunch',      time:'13:30', items:[{ name:'Chicken rice bowl', quantity:'200g chicken, 200g rice', calories:680, protein:52, carbs:76, fat:12 }]},
+    { name:'Post-Workout',time:'17:30',items:[{ name:'Whey protein shake', quantity:'1 scoop + 250ml milk', calories:310, protein:42, carbs:20, fat:6 }]},
+    { name:'Dinner',     time:'20:00', items:[{ name:'Paneer / fish + roti', quantity:'200g protein + 3 roti', calories:560, protein:38, carbs:56, fat:16 }]},
+  ],
+  maintenance: [
+    { name:'Breakfast', time:'08:00', items:[{ name:'Oats or eggs with toast', quantity:'standard', calories:380, protein:18, carbs:48, fat:10 }]},
+    { name:'Lunch',     time:'13:00', items:[{ name:'Dal + sabzi + roti + curd', quantity:'standard', calories:520, protein:22, carbs:74, fat:10 }]},
+    { name:'Snack',     time:'16:30', items:[{ name:'Fruit + handful nuts', quantity:'1 fruit + 20g nuts', calories:200, protein:4, carbs:30, fat:9 }]},
+    { name:'Dinner',    time:'20:00', items:[{ name:'Protein + vegetables + roti', quantity:'standard', calories:460, protein:30, carbs:52, fat:12 }]},
+  ],
+};
+const emptyMeal = () => ({ name:'', time:'', items:[{ name:'', quantity:'', calories:0, protein:0, carbs:0, fat:0 }] });
+const MealItemRow = ({ item, mi, ii, updateItem, removeItem }) => {
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 650);
+  useEffect(() => {
+    const h = () => setIsMobile(window.innerWidth < 650);
+    window.addEventListener('resize', h);
+    return () => window.removeEventListener('resize', h);
+  }, []);
+
+  const inputStyle = { fontSize: 13, padding: '6px 8px' };
+
+  if (isMobile) {
+    return (
+      <div style={{ background: 'var(--s1)', padding: 12, borderRadius: 8, marginBottom: 12, border: '1px solid var(--border)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
+          <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--orange)' }}>#Item {ii + 1}</span>
+          <button type="button" onClick={() => removeItem(mi, ii)} style={{ background: 'none', border: 'none', color: 'var(--error)', fontSize: 14 }}>✕ Remove</button>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+          <div className="form-group" style={{ gridColumn: 'span 2' }}>
+            <label className="form-label" style={{ fontSize: 11 }}>Food Name</label>
+            <input className="form-input" style={inputStyle} value={item.name} onChange={e => updateItem(mi, ii, 'name', e.target.value)} placeholder="e.g. Oats"/>
+          </div>
+          <div className="form-group" style={{ gridColumn: 'span 2' }}>
+            <label className="form-label" style={{ fontSize: 11 }}>Quantity</label>
+            <input className="form-input" style={inputStyle} value={item.quantity} onChange={e => updateItem(mi, ii, 'quantity', e.target.value)} placeholder="e.g. 1 bowl / 50g"/>
+          </div>
+          <div className="form-group">
+            <label className="form-label" style={{ fontSize: 11 }}>Cals (kcal)</label>
+            <input className="form-input" style={inputStyle} type="number" value={item.calories || ''} onChange={e => updateItem(mi, ii, 'calories', e.target.value)}/>
+          </div>
+          <div className="form-group">
+            <label className="form-label" style={{ fontSize: 11 }}>Prot (g)</label>
+            <input className="form-input" style={inputStyle} type="number" value={item.protein || ''} onChange={e => updateItem(mi, ii, 'protein', e.target.value)}/>
+          </div>
+          <div className="form-group">
+            <label className="form-label" style={{ fontSize: 11 }}>Carbs (g)</label>
+            <input className="form-input" style={inputStyle} type="number" value={item.carbs || ''} onChange={e => updateItem(mi, ii, 'carbs', e.target.value)}/>
+          </div>
+          <div className="form-group">
+            <label className="form-label" style={{ fontSize: 11 }}>Fat (g)</label>
+            <input className="form-input" style={inputStyle} type="number" value={item.fat || ''} onChange={e => updateItem(mi, ii, 'fat', e.target.value)}/>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: '2fr 1.5fr 70px 60px 60px 60px 28px', gap: 6, marginBottom: 6, alignItems: 'center' }}>
+      <input className="form-input" style={inputStyle} placeholder="Food name" value={item.name} onChange={e => updateItem(mi, ii, 'name', e.target.value)}/>
+      <input className="form-input" style={inputStyle} placeholder="Qty" value={item.quantity} onChange={e => updateItem(mi, ii, 'quantity', e.target.value)}/>
+      <input className="form-input" style={inputStyle} type="number" placeholder="kcal" value={item.calories || ''} onChange={e => updateItem(mi, ii, 'calories', e.target.value)}/>
+      <input className="form-input" style={inputStyle} type="number" placeholder="Prot" value={item.protein || ''} onChange={e => updateItem(mi, ii, 'protein', e.target.value)}/>
+      <input className="form-input" style={inputStyle} type="number" placeholder="Carb" value={item.carbs || ''} onChange={e => updateItem(mi, ii, 'carbs', e.target.value)}/>
+      <input className="form-input" style={inputStyle} type="number" placeholder="Fat" value={item.fat || ''} onChange={e => updateItem(mi, ii, 'fat', e.target.value)}/>
+      <button type="button" style={{ background: 'none', border: 'none', color: 'var(--error)', cursor: 'pointer', padding: 0, fontSize: 16 }} onClick={() => removeItem(mi, ii)}>✕</button>
+    </div>
+  );
+};
+
 export const AdminNutrition = () => {
   const [plans,setPlans]=useState([]);
   const [users,setUsers]=useState([]);
@@ -248,11 +330,57 @@ export const AdminNutrition = () => {
   const [assigning,setAssigning]=useState(null); // plan being assigned
   const [assignUserId,setAssignUserId]=useState('');
   const [assigning2,setAssigning2]=useState(false);
+  // Meal builder state
+  const [meals,setMeals]=useState([emptyMeal()]);
+  const [detailedMode,setDetailedMode]=useState(false);
   const load=()=>{ setLoading(true); Promise.all([api.get('/admin/nutrition'),api.get('/admin/users')]).then(([pr,ur])=>{ if(pr.data.success)setPlans(pr.data.plans); if(ur.data.success)setUsers(ur.data.users); }).catch(()=>{}).finally(()=>setLoading(false)); };
   useEffect(load,[]);
-  const openCreate=()=>{ setForm({title:'',description:'',goal:'weight_loss',caloriesPerDay:2000,proteinGrams:150,carbsGrams:200,fatGrams:65,isPublic:true}); setEditingId(null); setShowForm(true); setAssigning(null); };
-  const openEdit=p=>{ setForm({title:p.title,description:p.description||'',goal:p.goal||'weight_loss',caloriesPerDay:p.caloriesPerDay,proteinGrams:p.proteinGrams,carbsGrams:p.carbsGrams,fatGrams:p.fatGrams,isPublic:p.isPublic}); setEditingId(p.id||p._id); setShowForm(true); setAssigning(null); };
-  const save=async()=>{ if(!form.title)return toast.error('Title required'); setSaving(true); try{ if(editingId){await api.put(`/admin/nutrition/${editingId}`,form);toast.success('Updated');}else{await api.post('/admin/nutrition',form);toast.success('Created');} setShowForm(false); load(); }catch(e){toast.error(e.response?.data?.message||'Failed');} setSaving(false); };
+  const openCreate=()=>{ setForm({title:'',description:'',goal:'weight_loss',caloriesPerDay:2000,proteinGrams:150,carbsGrams:200,fatGrams:65,isPublic:true}); setMeals([emptyMeal()]); setDetailedMode(false); setEditingId(null); setShowForm(true); setAssigning(null); };
+  const openEdit=p=>{ setForm({title:p.title,description:p.description||'',goal:p.goal||'weight_loss',caloriesPerDay:p.caloriesPerDay,proteinGrams:p.proteinGrams,carbsGrams:p.carbsGrams,fatGrams:p.fatGrams,isPublic:p.isPublic}); const existingMeals=(p.meals||[]).map(m=>({...m,items:(m.items?.length?m.items:(m.foods||[]))})).filter(m=>m.name); setMeals(existingMeals.length?existingMeals:[emptyMeal()]); setDetailedMode(existingMeals.length>0); setEditingId(p.id||p._id); setShowForm(true); setAssigning(null); };
+  // Meal builder helpers
+  const applyTemplate=goal=>{ const t=MEAL_TEMPLATES[goal]||MEAL_TEMPLATES.maintenance; setMeals(JSON.parse(JSON.stringify(t))); setDetailedMode(true); };
+  const updateMeal=(mi,field,val)=>setMeals(ms=>ms.map((m,i)=>i===mi?{...m,[field]:val}:m));
+  const addMeal=()=>setMeals(ms=>[...ms,emptyMeal()]);
+  const removeMeal=mi=>setMeals(ms=>ms.filter((_,i)=>i!==mi));
+  const updateItem=(mi,ii,field,val)=>setMeals(ms=>ms.map((m,i)=>i===mi?{...m,items:m.items.map((it,j)=>j===ii?{...it,[field]:field==='calories'||field==='protein'||field==='carbs'||field==='fat'?parseInt(val)||0:val}:it)}:m));
+  const addItem=mi=>setMeals(ms=>ms.map((m,i)=>i===mi?{...m,items:[...m.items,{name:'',quantity:'',calories:0,protein:0,carbs:0,fat:0}]}:m));
+  const removeItem=(mi,ii)=>setMeals(ms=>ms.map((m,i)=>i===mi?{...m,items:m.items.filter((_,j)=>j!==ii)}:m));
+  const mealTotals=meals.reduce((acc,m)=>{(m.items||[]).forEach(it=>{acc.cal+=it.calories||0;acc.prot+=it.protein||0;acc.carbs+=it.carbs||0;acc.fat+=it.fat||0;});return acc;},{cal:0,prot:0,carbs:0,fat:0});
+  const save=async()=>{ 
+    if(!form.title) return toast.error('Title required'); 
+    setSaving(true);
+    const validMeals = detailedMode ? meals.filter(m => m.name?.trim()) : [];
+    const payload = { ...form, meals: validMeals };
+    
+    // Auto-calculate macros if they are zero and meals exist
+    if (detailedMode && validMeals.length > 0 && (form.caloriesPerDay === 0 || form.caloriesPerDay === 2000)) {
+       payload.caloriesPerDay = mealTotals.cal;
+       payload.proteinGrams = mealTotals.prot;
+       payload.carbsGrams = mealTotals.carbs;
+       payload.fatGrams = mealTotals.fat;
+    }
+
+    try { 
+      let res;
+      if (editingId) {
+        res = await api.put(`/admin/nutrition/${editingId}`, payload);
+      } else {
+        res = await api.post('/admin/nutrition', payload);
+      }
+      if (res.data?.success) {
+        toast.success(editingId ? 'Updated successfully' : 'Created successfully');
+        setShowForm(false); 
+        load();
+      } else {
+        throw new Error(res.data?.message || 'Save failed');
+      }
+    } catch (e) {
+      console.error('Save error:', e);
+      toast.error(e.response?.data?.message || e.message || 'Failed to save nutrition plan');
+    } finally {
+      setSaving(false);
+    }
+  };
   const del=async id=>{ if(!window.confirm('Delete this plan?'))return; try{await api.delete(`/admin/nutrition/${id}`);toast.success('Deleted');load();}catch{toast.error('Failed');} };
   const openAssign=p=>{ setAssigning(p); setAssignUserId(''); setShowForm(false); };
   const doAssign=async()=>{ if(!assignUserId)return toast.error('Select a user'); setAssigning2(true); try{ await api.patch(`/admin/nutrition/${assigning.id||assigning._id}/assign`,{userId:assignUserId}); toast.success('Plan assigned!'); setAssigning(null); }catch(e){toast.error(e.response?.data?.message||'Failed');} setAssigning2(false); };
@@ -266,11 +394,70 @@ export const AdminNutrition = () => {
             <div className="form-group" style={{ gridColumn:'1/-1' }}><label className="form-label">Title *</label><input className="form-input" value={form.title} onChange={e=>setForm(f=>({...f,title:e.target.value}))}/></div>
             <div className="form-group" style={{ gridColumn:'1/-1' }}><label className="form-label">Description</label><textarea className="form-input" rows={2} value={form.description} onChange={e=>setForm(f=>({...f,description:e.target.value}))}/></div>
             <div className="form-group"><label className="form-label">Goal</label><select className="form-input" value={form.goal} onChange={e=>setForm(f=>({...f,goal:e.target.value}))}><option value="weight_loss">Weight Loss</option><option value="muscle_gain">Muscle Gain</option><option value="maintenance">Maintenance</option><option value="endurance">Endurance</option></select></div>
-            {[['Calories/day','caloriesPerDay'],['Protein (g)','proteinGrams'],['Carbs (g)','carbsGrams'],['Fat (g)','fatGrams']].map(([label,field])=>(
-              <div key={field} className="form-group"><label className="form-label">{label}</label><input className="form-input" type="number" value={form[field]} onChange={e=>setForm(f=>({...f,[field]:parseInt(e.target.value)||0}))}/></div>
+            {[['Daily Calories','caloriesPerDay','kcal'],['Daily Protein','proteinGrams','grams'],['Daily Carbs','carbsGrams','grams'],['Daily Fat','fatGrams','grams']].map(([label,field,unit])=>(
+              <div key={field} className="form-group">
+                <label className="form-label">{label}</label>
+                <div style={{ position:'relative' }}>
+                  <input className="form-input" type="number" value={form[field]} onChange={e=>setForm(f=>({...f,[field]:parseInt(e.target.value)||0}))} style={{ paddingRight: 45 }}/>
+                  <span style={{ position:'absolute', right:10, top:'50%', transform:'translateY(-50%)', fontSize:11, color:'var(--t3)', pointerEvents:'none' }}>{unit}</span>
+                </div>
+              </div>
             ))}
             <div style={{ display:'flex', alignItems:'center', gap:8 }}><label style={{ display:'flex', alignItems:'center', gap:8, cursor:'pointer', fontSize:14, fontWeight:500 }}><input type="checkbox" checked={form.isPublic} onChange={e=>setForm(f=>({...f,isPublic:e.target.checked}))}/> Public (visible to all users)</label></div>
           </div>
+
+          {/* ── Meal Builder Toggle ── */}
+          <div style={{ marginTop:18, paddingTop:16, borderTop:'1px solid var(--border)' }}>
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:12, flexWrap:'wrap', gap:10 }}>
+              <div style={{ fontWeight:700, fontSize:14 }}>🍽 Meal Plan Breakdown <span style={{ fontWeight:400, fontSize:12, color:'var(--t3)' }}>(detailed food items)</span></div>
+              <div style={{ display:'flex', gap:8 }}>
+                <button type="button" className="btn btn-ghost btn-sm" onClick={()=>applyTemplate(form.goal)}>Use Template</button>
+                <button type="button" className={`btn btn-sm ${detailedMode?'btn-primary':'btn-ghost'}`} onClick={()=>setDetailedMode(d=>!d)}>{detailedMode?'Hide Meals':'Add Detailed Meals'}</button>
+              </div>
+            </div>
+
+            {detailedMode&&(<>
+              {/* Meal totals summary */}
+              {meals.some(m=>m.name)&&(
+                <div style={{ display:'flex', gap:14, flexWrap:'wrap', padding:'8px 12px', background:'var(--s2)', borderRadius:'var(--r-sm)', marginBottom:12, fontSize:13 }}>
+                  <span style={{ color:'var(--orange)', fontWeight:700 }}>Total: {mealTotals.cal} kcal</span>
+                  <span style={{ color:'var(--lime)' }}>P: {mealTotals.prot}g</span>
+                  <span style={{ color:'var(--info)' }}>C: {mealTotals.carbs}g</span>
+                  <span style={{ color:'var(--warning)' }}>F: {mealTotals.fat}g</span>
+                </div>
+              )}
+
+              {/* Meal list */}
+              {meals.map((meal,mi)=>(
+                <div key={mi} style={{ border:'1px solid var(--border)', borderRadius:'var(--r-md)', padding:14, marginBottom:12 }}>
+                  <div style={{ display:'flex', gap:10, marginBottom:10, flexWrap:'wrap', alignItems:'center' }}>
+                    <input className="form-input" style={{ flex:2, minWidth:140 }} placeholder="Meal name (e.g. Breakfast)" value={meal.name} onChange={e=>updateMeal(mi,'name',e.target.value)}/>
+                    <input className="form-input" type="time" style={{ width:120 }} value={meal.time} onChange={e=>updateMeal(mi,'time',e.target.value)}/>
+                    {meals.length>1&&<button type="button" className="btn btn-danger btn-sm" onClick={()=>removeMeal(mi)}>✕ Remove</button>}
+                  </div>
+                  {/* Food items headers */}
+                  {window.innerWidth >= 650 && meal.items.length > 0 && (
+                    <div style={{ display: 'grid', gridTemplateColumns: '2fr 1.5fr 70px 60px 60px 60px 28px', gap: 6, marginBottom: 4, padding: '0 4px' }}>
+                      <span style={{ fontSize: 10, color: 'var(--t3)', fontWeight: 600 }}>FOOD NAME</span>
+                      <span style={{ fontSize: 10, color: 'var(--t3)', fontWeight: 600 }}>QUANTITY</span>
+                      <span style={{ fontSize: 10, color: 'var(--t3)', fontWeight: 600 }}>KCAL</span>
+                      <span style={{ fontSize: 10, color: 'var(--t3)', fontWeight: 600 }}>P (g)</span>
+                      <span style={{ fontSize: 10, color: 'var(--t3)', fontWeight: 600 }}>C (g)</span>
+                      <span style={{ fontSize: 10, color: 'var(--t3)', fontWeight: 600 }}>F (g)</span>
+                      <span></span>
+                    </div>
+                  )}
+                  {/* Food items */}
+                  {meal.items.map((item,ii)=>(
+                    <MealItemRow key={ii} item={item} mi={mi} ii={ii} updateItem={updateItem} removeItem={removeItem} />
+                  ))}
+                  <button type="button" className="btn btn-ghost btn-sm" style={{ marginTop:4 }} onClick={()=>addItem(mi)}>+ Add food item</button>
+                </div>
+              ))}
+              <button type="button" className="btn btn-ghost btn-sm" onClick={addMeal}>+ Add another meal</button>
+            </>)}
+          </div>
+
           <div style={{ display:'flex', gap:8, marginTop:16 }}><button className="btn btn-primary flex-1" onClick={save} disabled={saving}>{saving?'Saving…':editingId?'Update':'Create'}</button><button className="btn btn-ghost" onClick={()=>setShowForm(false)}>Cancel</button></div>
         </div>
       )}

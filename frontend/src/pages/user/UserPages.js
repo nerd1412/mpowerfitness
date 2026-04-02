@@ -131,81 +131,126 @@ export const UserNutrition = () => {
       .finally(() => setLoading(false));
   }, []);
 
-  const goalColors = { weight_loss: 'var(--orange)', muscle_gain: 'var(--lime)', maintenance: 'var(--info)', endurance: 'var(--warning)' };
+  const goalColors = { weight_loss:'var(--orange)', muscle_gain:'var(--lime)', maintenance:'var(--info)', endurance:'var(--warning)', pcod:'#FF6B9D', diabetes:'#4E9FFF' };
   const plan = selected || plans[0];
 
+  // Normalize meals — handle legacy 'foods' key from seeded data
+  const getPlanMeals = (p) => (p?.meals || []).map(m => ({ ...m, items: m.items?.length ? m.items : (m.foods || []) })).filter(m => m.name);
+
+  // Derive daily totals: prefer stored values, fall back to sum of meals
+  const getDailyTotals = (p) => {
+    if (!p) return { cal: 0, prot: 0, carbs: 0, fat: 0 };
+    const meals = getPlanMeals(p);
+    if (p.caloriesPerDay) return { cal: p.caloriesPerDay, prot: p.proteinGrams || 0, carbs: p.carbsGrams || 0, fat: p.fatGrams || 0 };
+    return meals.reduce((acc, m) => {
+      (m.items || []).forEach(it => { acc.cal += it.calories || 0; acc.prot += it.protein || 0; acc.carbs += it.carbs || 0; acc.fat += it.fat || 0; });
+      return acc;
+    }, { cal: 0, prot: 0, carbs: 0, fat: 0 });
+  };
+
   const MacroPill = ({ label, value, unit, color }) => (
-    <div style={{ textAlign: 'center', background: 'var(--s2)', borderRadius: 'var(--r-sm)', padding: '10px 14px' }}>
-      <div style={{ fontWeight: 800, fontSize: 22, color }}>{value}<span style={{ fontSize: 13, fontWeight: 500, color: 'var(--t3)' }}>{unit}</span></div>
-      <div style={{ fontSize: 12, color: 'var(--t3)', marginTop: 2 }}>{label}</div>
+    <div style={{ textAlign:'center', background:'var(--s2)', borderRadius:'var(--r-sm)', padding:'10px 14px' }}>
+      <div style={{ fontWeight:800, fontSize:22, color }}>{value || 0}<span style={{ fontSize:13, fontWeight:500, color:'var(--t3)' }}>{unit}</span></div>
+      <div style={{ fontSize:12, color:'var(--t3)', marginTop:2 }}>{label}</div>
     </div>
   );
 
   return (
-    <div style={{ maxWidth: 1100 }}>
-      <div style={{ marginBottom: 28 }}>
-        <h1 style={{ fontSize: 28, fontWeight: 800, marginBottom: 4 }}>Nutrition <span style={{ color: 'var(--lime)' }}>Plans</span></h1>
-        <p style={{ color: 'var(--t2)', fontSize: 14 }}>Your personalised meal guidance</p>
+    <div style={{ maxWidth:1100 }}>
+      <div style={{ marginBottom:28 }}>
+        <h1 style={{ fontSize:28, fontWeight:800, marginBottom:4 }}>Nutrition <span style={{ color:'var(--lime)' }}>Plans</span></h1>
+        <p style={{ color:'var(--t2)', fontSize:14 }}>Your personalised meal guidance</p>
       </div>
-      {loading ? <div style={{ display: 'flex', justifyContent: 'center', padding: 60 }}><div className="spinner spinner-lg" /></div> : (
-        <div className="nutrition-layout" style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) minmax(0,2fr)', gap: 20 }}>
+      {loading ? <div style={{ display:'flex', justifyContent:'center', padding:60 }}><div className="spinner spinner-lg"/></div> : (
+        <div className="nutrition-layout" style={{ display:'grid', gridTemplateColumns:'minmax(0,1fr) minmax(0,2fr)', gap:20 }}>
           {/* Plan list */}
-          <div className="nutrition-plan-list" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {plans.map(p => (
-              <div key={p.id || p._id} onClick={() => setSelected(p)}
-                className="card card-hover nutrition-plan-item"
-                style={{ cursor: 'pointer', borderColor: (selected?.id || selected?._id || plans[0]?.id) === (p.id || p._id) ? 'var(--lime)' : 'transparent' }}>
-                <div style={{ fontWeight: 600, marginBottom: 4 }}>{p.title}</div>
-                <div style={{ fontSize: 12, color: goalColors[p.goal] || 'var(--t3)', textTransform: 'capitalize', marginBottom: 6 }}>{p.goal?.replace(/_/g,' ')}</div>
-                <div style={{ fontSize: 13, color: 'var(--t2)' }}>{p.caloriesPerDay} kcal/day</div>
-              </div>
-            ))}
-            {plans.length === 0 && <div style={{ color: 'var(--t3)', padding: 20, textAlign: 'center' }}>No nutrition plans available</div>}
+          <div className="nutrition-plan-list" style={{ display:'flex', flexDirection:'column', gap:10 }}>
+            {plans.map(p => {
+              const meals = getPlanMeals(p);
+              return (
+                <div key={p.id||p._id} onClick={() => setSelected(p)}
+                  className="card card-hover nutrition-plan-item"
+                  style={{ cursor:'pointer', borderColor:(selected?.id||selected?._id||plans[0]?.id)===(p.id||p._id)?'var(--lime)':'transparent' }}>
+                  <div style={{ fontWeight:600, marginBottom:4 }}>{p.title}</div>
+                  <div style={{ fontSize:12, color:goalColors[p.goal]||'var(--t3)', textTransform:'capitalize', marginBottom:6 }}>{(p.goal||'').replace(/_/g,' ')}</div>
+                  <div style={{ fontSize:13, color:'var(--t2)' }}>{getDailyTotals(p).cal} kcal/day</div>
+                  {meals.length > 0 && <div style={{ fontSize:11, color:'var(--t3)', marginTop:4 }}>🍽 {meals.length} meals</div>}
+                </div>
+              );
+            })}
+            {plans.length === 0 && <div style={{ color:'var(--t3)', padding:20, textAlign:'center' }}>No nutrition plans available.<br/><span style={{ fontSize:12 }}>Ask your trainer or admin to assign a plan.</span></div>}
           </div>
 
           {/* Plan detail */}
-          {plan && (
-            <div>
-              <div className="card" style={{ marginBottom: 16 }}>
-                <h2 style={{ fontSize: 20, fontWeight: 800, marginBottom: 6 }}>{plan.title}</h2>
-                <p style={{ color: 'var(--t2)', fontSize: 14, marginBottom: 16 }}>{plan.description}</p>
-                <div className="macro-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 10, marginBottom: 0 }}>
-                  <MacroPill label="Calories" value={plan.caloriesPerDay} unit="kcal" color="var(--orange)" />
-                  <MacroPill label="Protein" value={plan.proteinGrams} unit="g" color="var(--lime)" />
-                  <MacroPill label="Carbs" value={plan.carbsGrams} unit="g" color="var(--info)" />
-                  <MacroPill label="Fat" value={plan.fatGrams} unit="g" color="var(--warning)" />
-                </div>
-              </div>
-              {(plan.meals || []).map((meal, mi) => (
-                <div key={mi} className="card" style={{ marginBottom: 12 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                    <div style={{ fontWeight: 700, fontSize: 15 }}>{meal.name}</div>
-                    <div style={{ fontSize: 12, color: 'var(--t3)' }}>⏰ {meal.time}</div>
+          {plan && (() => {
+            const meals = getPlanMeals(plan);
+            const totals = getDailyTotals(plan);
+            const fromMeals = !plan.caloriesPerDay && meals.length > 0;
+            return (
+              <div>
+                <div className="card" style={{ marginBottom:16 }}>
+                  <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:6, gap:10, flexWrap:'wrap' }}>
+                    <h2 style={{ fontSize:20, fontWeight:800 }}>{plan.title}</h2>
+                    <span className="badge badge-neutral" style={{ textTransform:'capitalize', fontSize:11 }}>{(plan.goal||'').replace(/_/g,' ')}</span>
                   </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                    {(meal.items || []).map((item, ii) => (
-                      <div key={ii} className="meal-item-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8, padding: '8px 0', borderBottom: ii < meal.items.length - 1 ? '1px solid var(--border)' : 'none' }}>
-                        <div>
-                          <div style={{ fontWeight: 500, fontSize: 14 }}>{item.name}</div>
-                          <div style={{ fontSize: 12, color: 'var(--t3)' }}>{item.quantity}</div>
-                        </div>
-                        <div className="meal-macros" style={{ display: 'flex', gap: 14, fontSize: 12 }}>
-                          <span style={{ color: 'var(--orange)' }}>{item.calories} kcal</span>
-                          <span style={{ color: 'var(--lime)' }}>P:{item.protein}g</span>
-                          <span style={{ color: 'var(--info)' }}>C:{item.carbs}g</span>
-                          <span style={{ color: 'var(--warning)' }}>F:{item.fat}g</span>
+                  {plan.description && <p style={{ color:'var(--t2)', fontSize:14, marginBottom:16 }}>{plan.description}</p>}
+                  {fromMeals && <p style={{ fontSize:11, color:'var(--t3)', marginBottom:8 }}>Totals calculated from meal plan below</p>}
+                  <div className="macro-grid" style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:10 }}>
+                    <MacroPill label="Calories" value={totals.cal} unit="kcal" color="var(--orange)"/>
+                    <MacroPill label="Protein" value={totals.prot} unit="g" color="var(--lime)"/>
+                    <MacroPill label="Carbs" value={totals.carbs} unit="g" color="var(--info)"/>
+                    <MacroPill label="Fat" value={totals.fat} unit="g" color="var(--warning)"/>
+                  </div>
+                </div>
+
+                {meals.length > 0 ? meals.map((meal, mi) => {
+                  const items = meal.items || [];
+                  const mealCal = items.reduce((s,i) => s+(i.calories||0), 0);
+                  const mealProt = items.reduce((s,i) => s+(i.protein||0), 0);
+                  return (
+                    <div key={mi} className="card" style={{ marginBottom:12 }}>
+                      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:items.length?12:0, flexWrap:'wrap', gap:8 }}>
+                        <div style={{ fontWeight:700, fontSize:15 }}>{meal.name}</div>
+                        <div style={{ display:'flex', gap:12, alignItems:'center' }}>
+                          {meal.time && <span style={{ fontSize:12, color:'var(--t3)' }}>⏰ {meal.time}</span>}
+                          <span style={{ fontSize:12, color:'var(--orange)' }}>{mealCal} kcal</span>
+                          <span style={{ fontSize:12, color:'var(--lime)' }}>P: {mealProt}g</span>
                         </div>
                       </div>
-                    ))}
+                      {items.length > 0 && (
+                        <>
+                          <div style={{ display:'flex', flexDirection:'column', gap:0 }}>
+                            {items.map((item, ii) => (
+                              <div key={ii} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', flexWrap:'wrap', gap:8, padding:'8px 0', borderBottom:ii<items.length-1?'1px solid var(--border)':'none' }}>
+                                <div>
+                                  <div style={{ fontWeight:500, fontSize:14 }}>{item.name}</div>
+                                  {item.quantity && <div style={{ fontSize:12, color:'var(--t3)' }}>{item.quantity}</div>}
+                                </div>
+                                <div style={{ display:'flex', gap:12, fontSize:12 }}>
+                                  <span style={{ color:'var(--orange)' }}>{item.calories} kcal</span>
+                                  <span style={{ color:'var(--lime)' }}>P:{item.protein}g</span>
+                                  <span style={{ color:'var(--info)' }}>C:{item.carbs}g</span>
+                                  <span style={{ color:'var(--warning)' }}>F:{item.fat}g</span>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                          <div style={{ marginTop:10, paddingTop:10, borderTop:'1px solid var(--border)', display:'flex', gap:16, fontSize:13 }}>
+                            <span style={{ color:'var(--t3)' }}>Meal total: <strong style={{ color:'var(--orange)' }}>{mealCal} kcal</strong></span>
+                            <span style={{ color:'var(--t3)' }}>Protein: <strong style={{ color:'var(--lime)' }}>{mealProt}g</strong></span>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  );
+                }) : (
+                  <div className="card" style={{ textAlign:'center', padding:24, color:'var(--t3)', fontSize:13 }}>
+                    No meal breakdown available. Follow the daily macro targets above.
                   </div>
-                  <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid var(--border)', display: 'flex', gap: 16, fontSize: 13 }}>
-                    <span style={{ color: 'var(--t3)' }}>Total: <strong style={{ color: 'var(--orange)' }}>{(meal.items || []).reduce((s, i) => s + (i.calories || 0), 0)} kcal</strong></span>
-                    <span style={{ color: 'var(--t3)' }}>Protein: <strong style={{ color: 'var(--lime)' }}>{(meal.items || []).reduce((s, i) => s + (i.protein || 0), 0)}g</strong></span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+                )}
+              </div>
+            );
+          })()}
         </div>
       )}
     </div>

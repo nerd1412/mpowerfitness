@@ -420,12 +420,25 @@ router.get('/bookings', ...adminAuth, async (req, res) => {
     const { status } = req.query;
     const where = status ? { status } : {};
     const bookings = await Booking.findAll({ where, order: [['createdAt', 'DESC']] });
-    // Populate user/trainer names
-    const enriched = await Promise.all(bookings.map(async b => {
-      const user = await User.findByPk(b.userId, { attributes: ['id','name','email','avatar'] });
-      const trainer = await Trainer.findByPk(b.trainerId, { attributes: ['id','name','avatar'] });
-      return { ...b.toJSON(), user, trainer };
+
+    // Batch-load users and trainers — fixes N+1 query (was 2×N individual lookups)
+    const userIds    = [...new Set(bookings.map(b => b.userId).filter(Boolean))];
+    const trainerIds = [...new Set(bookings.map(b => b.trainerId).filter(Boolean))];
+
+    const [users, trainers] = await Promise.all([
+      User.findAll({ where: { id: userIds }, attributes: ['id','name','email','avatar'] }),
+      Trainer.findAll({ where: { id: trainerIds }, attributes: ['id','name','avatar'] }),
+    ]);
+
+    const userMap    = Object.fromEntries(users.map(u => [u.id, u]));
+    const trainerMap = Object.fromEntries(trainers.map(t => [t.id, t]));
+
+    const enriched = bookings.map(b => ({
+      ...b.toJSON(),
+      user:    userMap[b.userId]    || null,
+      trainer: trainerMap[b.trainerId] || null,
     }));
+
     res.json({ success: true, bookings: enriched });
   } catch (err) { res.status(500).json({ success: false, message: err.message }); }
 });

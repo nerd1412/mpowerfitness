@@ -11,8 +11,9 @@ const seed = async () => {
   console.log('🌱 Seeding Mpower Fitness database…');
 
   /* ── 1. Admin account ─────────────────────────────────────── */
-  if (!(await exists(Admin, { email: 'admin@mpowerfitness.com' }))) {
-    await Admin.create({
+  let admin = await Admin.findOne({ where: { email: 'admin@mpowerfitness.com' } });
+  if (!admin) {
+    admin = await Admin.create({
       name: 'Mpower Admin',
       email: 'admin@mpowerfitness.com',
       password: await bcrypt.hash('Admin@123456', 12),
@@ -27,6 +28,8 @@ const seed = async () => {
     console.log('✅ Admin already exists, skipping');
   }
 
+  const adminId = admin.id || admin._id;
+
   /* ── 2. Sample workouts ──────────────────────────────────── */
   if (!(await exists(Workout, { title: 'Full-Body Strength Foundation' }))) {
     await Workout.create({
@@ -38,7 +41,8 @@ const seed = async () => {
       caloriesBurn: 320,
       isFeatured: true,
       isActive: true,
-      createdBy: 'admin',
+      createdBy: adminId,
+      creatorModel: 'Admin',
       tags: ['compound', 'full-body', 'progressive-overload', 'beginner-friendly', 'ACSM'],
       equipment: ['barbell', 'dumbbells', 'bench', 'pull-up-bar'],
       exercises: [
@@ -75,7 +79,8 @@ const seed = async () => {
       caloriesBurn: 280,
       isFeatured: true,
       isActive: true,
-      createdBy: 'admin',
+      createdBy: adminId,
+      creatorModel: 'Admin',
       tags: ['HIIT', 'fat-loss', 'EPOC', 'Tabata', 'cardio', 'no-equipment'],
       equipment: ['mat'],
       exercises: [
@@ -134,74 +139,58 @@ const seed = async () => {
   }
 
   /* ── 4. Sample nutrition plan ────────────────────────────── */
-  if (!(await exists(NutritionPlan, { title: 'Balanced Macro Blueprint' }))) {
+  const SEED_MEALS = [
+    { name:'Breakfast', time:'07:30', items:[
+      { name:'Oats with milk & banana', quantity:'60g oats + 200ml milk + 1 banana', calories:380, protein:14, carbs:68, fat:6 },
+      { name:'Boiled eggs or paneer', quantity:'2 eggs OR 80g paneer', calories:160, protein:14, carbs:2, fat:10 },
+      { name:'Green tea', quantity:'1 cup unsweetened', calories:2, protein:0, carbs:0, fat:0 },
+    ]},
+    { name:'Mid-Morning Snack', time:'10:30', items:[
+      { name:'Mixed nuts', quantity:'30g almonds + walnuts', calories:185, protein:5, carbs:6, fat:16 },
+      { name:'Seasonal fruit', quantity:'1 medium apple / guava / pear', calories:80, protein:1, carbs:20, fat:0 },
+    ]},
+    { name:'Lunch', time:'13:00', items:[
+      { name:'Dal (moong/masoor/chana)', quantity:'1 katori (150g cooked)', calories:145, protein:10, carbs:22, fat:2 },
+      { name:'Mixed sabzi', quantity:'200g cooked vegetables', calories:90, protein:4, carbs:14, fat:2 },
+      { name:'Chapati / brown rice', quantity:'2 medium roti OR 120g cooked brown rice', calories:200, protein:6, carbs:40, fat:2 },
+      { name:'Curd / raita', quantity:'150g low-fat curd', calories:90, protein:7, carbs:8, fat:2 },
+    ]},
+    { name:'Pre-Workout Snack', time:'16:30', items:[
+      { name:'Banana + peanut butter', quantity:'1 large banana + 1 tbsp PB', calories:230, protein:5, carbs:38, fat:8 },
+    ]},
+    { name:'Dinner', time:'19:30', items:[
+      { name:'Grilled chicken / paneer / tofu', quantity:'150g lean protein', calories:220, protein:35, carbs:3, fat:7 },
+      { name:'Sautéed vegetables', quantity:'200g mixed (broccoli, beans, capsicum)', calories:70, protein:4, carbs:10, fat:1 },
+      { name:'Chapati', quantity:'2 medium roti', calories:160, protein:5, carbs:32, fat:2 },
+    ]},
+  ];
+  const seedPlan = await NutritionPlan.findOne({ where: { title: 'Balanced Macro Blueprint' } });
+  if (!seedPlan) {
     await NutritionPlan.create({
       title: 'Balanced Macro Blueprint',
-      description: 'Flexible macro-based eating plan grounded in ICMR (Indian Council of Medical Research) dietary guidelines and adapted for active individuals. Emphasises dal, sabzi, roti, rice, curd and regional whole foods with precision macro targets.',
-      category: 'general',
+      description: 'Flexible macro-based eating plan grounded in ICMR dietary guidelines. Emphasises dal, sabzi, roti, rice, curd and regional whole foods with precision macro targets.',
       goal: 'maintenance',
-      calories: 2200,
-      protein: 160,
-      carbs: 260,
-      fat: 65,
-      isActive: true,
-      isFeatured: true,
+      caloriesPerDay: 2200,
+      proteinGrams: 160,
+      carbsGrams: 260,
+      fatGrams: 65,
+      isPublic: true,
       tags: ['balanced', 'Indian-foods', 'ICMR', 'macros', 'flexible', 'vegetarian-friendly'],
-      meals: [
-        {
-          name: 'Breakfast (7–8 AM)',
-          time: '07:30',
-          foods: [
-            { name: 'Oats with milk & banana', quantity: '60g oats + 200ml milk + 1 banana', calories: 380, protein: 14, carbs: 68, fat: 6 },
-            { name: 'Boiled eggs or paneer', quantity: '2 eggs OR 80g paneer', calories: 160, protein: 14, carbs: 2, fat: 10 },
-            { name: 'Green tea', quantity: '1 cup unsweetened', calories: 2, protein: 0, carbs: 0, fat: 0 },
-          ],
-        },
-        {
-          name: 'Mid-Morning (10:30 AM)',
-          time: '10:30',
-          foods: [
-            { name: 'Mixed nuts', quantity: '30g almonds + walnuts', calories: 185, protein: 5, carbs: 6, fat: 16 },
-            { name: 'Seasonal fruit', quantity: '1 medium apple / guava / pear', calories: 80, protein: 1, carbs: 20, fat: 0 },
-          ],
-        },
-        {
-          name: 'Lunch (1–2 PM)',
-          time: '13:00',
-          foods: [
-            { name: 'Dal (moong/masoor/chana)', quantity: '1 katori (150g cooked)', calories: 145, protein: 10, carbs: 22, fat: 2 },
-            { name: 'Mixed sabzi', quantity: '200g cooked vegetables', calories: 90, protein: 4, carbs: 14, fat: 2 },
-            { name: 'Chapati / brown rice', quantity: '2 medium roti OR 120g cooked brown rice', calories: 200, protein: 6, carbs: 40, fat: 2 },
-            { name: 'Curd / raita', quantity: '150g low-fat curd', calories: 90, protein: 7, carbs: 8, fat: 2 },
-          ],
-        },
-        {
-          name: 'Pre-Workout Snack (4:30 PM)',
-          time: '16:30',
-          foods: [
-            { name: 'Banana + peanut butter', quantity: '1 large banana + 1 tbsp PB', calories: 230, protein: 5, carbs: 38, fat: 8 },
-          ],
-        },
-        {
-          name: 'Dinner (7:30–8 PM)',
-          time: '19:30',
-          foods: [
-            { name: 'Grilled chicken / paneer / tofu', quantity: '150g lean protein', calories: 220, protein: 35, carbs: 3, fat: 7 },
-            { name: 'Sautéed vegetables', quantity: '200g mixed (broccoli, beans, capsicum)', calories: 70, protein: 4, carbs: 10, fat: 1 },
-            { name: 'Chapati', quantity: '2 medium roti', calories: 160, protein: 5, carbs: 32, fat: 2 },
-          ],
-        },
-      ],
-      guidelines: [
-        'Drink 35 ml water per kg bodyweight daily (WHO guideline)',
-        'Eat within 45 min post-workout: 3:1 carb:protein ratio (ISSN 2017)',
-        'Space meals 3–4 hrs apart to optimise protein synthesis',
-        'Include 400g vegetables/fruit daily (ICMR rainbow-plate recommendation)',
-        'Limit refined sugar to <25g/day (WHO 2015)',
-        'Adjust portions ±200 kcal based on weekly weight trend',
-      ],
+      meals: SEED_MEALS,
     });
     console.log('✅ Nutrition plan seeded — Balanced Macro Blueprint');
+  } else if (!seedPlan.caloriesPerDay || seedPlan.caloriesPerDay === 0) {
+    // Fix legacy seeded data that used wrong field names
+    const fixedMeals = (seedPlan.meals || []).map(m => ({
+      name: m.name, time: m.time,
+      items: (m.items && m.items.length ? m.items : m.foods) || [],
+    })).filter(m => m.name);
+    await seedPlan.update({
+      caloriesPerDay: 2200, proteinGrams: 160, carbsGrams: 260, fatGrams: 65,
+      isPublic: true,
+      meals: fixedMeals.length ? fixedMeals : SEED_MEALS,
+    });
+    console.log('✅ Fixed nutrition plan field names');
   }
 
   /* ── 5. Community groups ─────────────────────────────── */

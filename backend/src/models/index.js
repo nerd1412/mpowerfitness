@@ -140,7 +140,7 @@ const Workout = sequelize.define('Workout', {
   likes:       { type: DataTypes.INTEGER, defaultValue: 0 },
   completions: { type: DataTypes.INTEGER, defaultValue: 0 },
   assignedTo:  { type: DataTypes.TEXT, defaultValue: '[]', get() { try { return JSON.parse(this.getDataValue('assignedTo')); } catch { return []; } }, set(v) { this.setDataValue('assignedTo', JSON.stringify(v)); } },
-}, { tableName: 'workouts' });
+}, { tableName: 'workouts', indexes: [{ fields: ['category'] }, { fields: ['isPublic'] }, { fields: ['isFeatured'] }] });
 
 // ==================== WORKOUT SESSION ====================
 const WorkoutSession = sequelize.define('WorkoutSession', {
@@ -180,7 +180,7 @@ const Booking = sequelize.define('Booking', {
   cancelledBy: DataTypes.STRING,
   rating:      DataTypes.INTEGER,
   review:      DataTypes.TEXT,
-}, { tableName: 'bookings' });
+}, { tableName: 'bookings', indexes: [{ fields: ['userId'] }, { fields: ['trainerId'] }, { fields: ['status'] }, { fields: ['sessionDate'] }] });
 
 // ==================== PROGRESS ====================
 const Progress = sequelize.define('Progress', {
@@ -216,7 +216,7 @@ const NutritionPlan = sequelize.define('NutritionPlan', {
   creatorModel: DataTypes.STRING,
   isPublic:    { type: DataTypes.BOOLEAN, defaultValue: false },
   assignedTo:  { type: DataTypes.TEXT, defaultValue: '[]', get() { try { return JSON.parse(this.getDataValue('assignedTo')); } catch { return []; } }, set(v) { this.setDataValue('assignedTo', JSON.stringify(v)); } },
-}, { tableName: 'nutrition_plans' });
+}, { tableName: 'nutrition_plans', indexes: [{ fields: ['createdBy'] }, { fields: ['isPublic'] }, { fields: ['goal'] }] });
 
 // ==================== PROGRAM ====================
 const Program = sequelize.define('Program', {
@@ -290,7 +290,7 @@ const Notification = sequelize.define('Notification', {
   readAt:         DataTypes.DATE,
   data:           { type: DataTypes.TEXT, defaultValue: '{}', get() { try { return JSON.parse(this.getDataValue('data')); } catch { return {}; } }, set(v) { this.setDataValue('data', JSON.stringify(v)); } },
   actionUrl:      DataTypes.STRING,
-}, { tableName: 'notifications' });
+}, { tableName: 'notifications', indexes: [{ fields: ['recipientId'] }, { fields: ['recipientId', 'isRead'] }] });
 
 
 // ==================== BLOG ====================
