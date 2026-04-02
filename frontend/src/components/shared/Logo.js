@@ -2,127 +2,95 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 
 /*
- * MP Monogram Icon
- * Design principles applied:
- *  - Geometric, single-weight strokes for scalability
- *  - Negative space letter "P" implied inside "M" strokes
- *  - Neon-lime accent on connective bridge for brand colour
- *  - Renders crisply from 20px to 200px
+ * Original Styled Logo (v2.0)
+ *
+ * Design logic:
+ * • Base: Italic "Ghost M" (the brand symbol) #1e2230.
+ * • Accent: Orange vertical bar #FF5F1F.
+ * • Wordmark: "MPower" Bold #F0F2F5.
+ * • Baseline: Neon lime underline #C8F135.
+ * • Symmetrical "FITNESS" sub-branded block.
+ * • All dots removed as requested.
  */
-const MPMark = ({ size = 32 }) => {
-  const s = size;
+const OriginalLogoSVG = ({ size = 36 }) => {
+  const scale = size / 36;
   return (
-    <svg
-      viewBox="0 0 40 40"
-      width={s}
-      height={s}
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      aria-hidden="true"
-    >
-      {/* Background square with rounded corners */}
-      <rect width="40" height="40" rx="9" fill="#0A0B0D" />
+    <svg viewBox="0 0 540 180" width={Math.round(112 * scale)} height={Math.round(38 * scale)} fill="none" style={{ display: 'block' }}>
+      {/* Ghost italic M — visual foundation */}
+      <text x="0" y="160"
+        fontFamily="'Inter', 'Arial Black', sans-serif"
+        fontSize="172" fontWeight="900" fontStyle="italic"
+        fill="#1e2230" letterSpacing="-6">M</text>
 
-      {/* M strokes — two outer legs + centre peak */}
-      {/* Left outer leg */}
-      <path d="M7 31 L7 10" stroke="#F0F2F5" strokeWidth="3.2" strokeLinecap="round" />
-      {/* Left roof slope */}
-      <path d="M7 10 L20 21" stroke="#F0F2F5" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round" />
-      {/* Right roof slope */}
-      <path d="M20 21 L33 10" stroke="#F0F2F5" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round" />
-      {/* Right outer leg (shortened — becomes P vertical) */}
-      <path d="M33 10 L33 31" stroke="#F0F2F5" strokeWidth="3.2" strokeLinecap="round" />
+      {/* Orange accent bar */}
+      <rect x="25" y="44" width="8" height="72" rx="2.5" fill="#FF5F1F"/>
 
-      {/* Neon-lime P bowl – horizontal bridge gives P shape on right column */}
-      <path
-        d="M33 10 Q38 18 33 23"
-        stroke="#C8F135"
-        strokeWidth="2.8"
-        strokeLinecap="round"
-        fill="none"
-      />
-      {/* Horizontal midbar connecting P bowl to vertical */}
-      <line x1="33" y1="23" x2="33" y2="23" stroke="#C8F135" strokeWidth="2.8" strokeLinecap="round" />
+      {/* MPower wordmark — the brand name */}
+      <text x="44" y="106"
+        fontFamily="'Inter', 'Arial Black', sans-serif"
+        fontSize="82" fontWeight="900"
+        fill="#F0F2F5" letterSpacing="-2">MPower</text>
 
-      {/* Accent dot — brand punctuation (bottom-left) */}
-      <circle cx="7" cy="35" r="1.8" fill="#C8F135" />
+      {/* Underline bar — the lime streak */}
+      <rect x="44" y="122" width="460" height="12" rx="3" fill="#C8F135"/>
+
+      {/* FITNESS text — spaced perfectly for symmetry */}
+      <text x="44" y="162"
+        fontFamily="'Inter', sans-serif"
+        fontSize="24" fontWeight="700"
+        letterSpacing="28" fill="#C8F135" textTransform="uppercase">FITNESS</text>
     </svg>
   );
 };
 
-/* ─── Full logo (icon + wordmark) ─────────────────────────────────── */
+/* ─── Full logo (brand name version) ────────────────────────────── */
 export const LogoFull = ({ height = 44, linkTo = '/', style }) => {
   const scale = height / 44;
-  const iconSize = Math.round(36 * scale);
+  const logo = <OriginalLogoSVG size={Math.round(44 * scale)} />;
 
-  const logo = (
-    <div
-      style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: Math.round(10 * scale),
-        flexShrink: 0,
-        userSelect: 'none',
-        ...style,
-      }}
-    >
-      {/* MP Icon */}
-      <MPMark size={iconSize} />
-
-      {/* Wordmark: Mpower Fitness */}
-      <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1 }}>
-        {/* "Mpower" — one visual unit */}
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: 0 }}>
-          <span style={{
-            fontFamily: "'Outfit', 'Inter', 'Helvetica Neue', Arial, sans-serif",
-            fontWeight: 900,
-            fontSize: Math.round(20 * scale),
-            letterSpacing: '-0.02em',
-            color: '#C8F135',
-            lineHeight: 1,
-          }}>M</span>
-          <span style={{
-            fontFamily: "'Outfit', 'Inter', 'Helvetica Neue', Arial, sans-serif",
-            fontWeight: 800,
-            fontSize: Math.round(20 * scale),
-            letterSpacing: '-0.02em',
-            color: '#F0F2F5',
-            lineHeight: 1,
-          }}>power</span>
-        </div>
-
-        {/* "Fitness" sub-label */}
-        <span style={{
-          fontFamily: "'Outfit', 'Inter', 'Helvetica Neue', Arial, sans-serif",
-          fontWeight: 500,
-          fontSize: Math.round(9 * scale),
-          letterSpacing: '0.16em',
-          color: '#C8F135',
-          opacity: 0.80,
-          lineHeight: 1,
-          textTransform: 'uppercase',
-          marginTop: Math.round(2 * scale),
-        }}>Fitness</span>
-      </div>
-    </div>
-  );
-
-  if (!linkTo) return logo;
+  if (!linkTo) return <div style={{ display:'flex', alignItems:'center', ...style }}>{logo}</div>;
   return (
-    <Link to={linkTo} style={{ display: 'inline-flex', textDecoration: 'none', lineHeight: 0 }} aria-label="Mpower Fitness">
+    <Link to={linkTo} style={{ display:'flex', alignItems:'center', textDecoration:'none', ...style }} aria-label="MPower Fitness">
       {logo}
     </Link>
   );
 };
 
-/* ─── Icon-only (collapsed sidebar / favicon) ───────────────────── */
-export const LogoIcon = ({ size = 40, style }) => (
-  <div style={{ display: 'inline-flex', ...style }}>
-    <MPMark size={size} />
-  </div>
-);
+/* ─── Icon-only (sidebar / favicon style) ────────────────────────── */
+export const LogoIcon = ({ size = 40, style }) => {
+  const scale = size / 40;
+  return (
+    <div style={{
+      width: size, height: size,
+      borderRadius: Math.round(13 * scale),
+      background: '#111318', overflow: 'hidden',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      ...style
+    }}>
+      <svg viewBox="0 0 100 100" width={Math.round(size * 0.85)} height={Math.round(size * 0.85)} fill="none">
+        {/* Ghost M */}
+        <text x="-15" y="90"
+          fontFamily="'Inter', 'Arial Black', sans-serif"
+          fontSize="110" fontWeight="900" fontStyle="italic"
+          fill="#1e2230" letterSpacing="-4">M</text>
 
-/* ─── Mark (no link wrapper) ────────────────────────────────────── */
+        {/* Orange vertical */}
+        <rect x="18" y="24" width="7" height="44" rx="2" fill="#FF5F1F"/>
+
+        {/* M foreground */}
+        <text x="28" y="60"
+          fontFamily="'Inter', 'Arial Black', sans-serif"
+          fontSize="54" fontWeight="900"
+          fill="#F0F2F5" letterSpacing="-2">M</text>
+
+        {/* Lime slash */}
+        <rect x="22" y="68" width="56" height="8" rx="1.5" fill="#C8F135"/>
+      </svg>
+    </div>
+  );
+};
+
+/* ─── Mark (Static component) ───────────────────────────────────── */
 export const LogoMark = ({ height = 32 }) => <LogoFull height={height} linkTo={null} />;
 
 export default LogoFull;
